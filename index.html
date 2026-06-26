@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #1a1a2e; 
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -16,34 +16,76 @@
             color: white;
             user-select: none;
         }
-        #game { text-align: center; }
-        h1 { margin-bottom: 5px; font-size: 22px; }
-        canvas { border-radius: 12px; background: #076324; cursor: pointer; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        .info { margin-top: 8px; font-size: 13px; color: #aaa; }
-        .win { color: #f1c40f; font-size: 20px; font-weight: bold; margin-top: 8px; }
-        .btn-row { margin-top: 10px; display: flex; gap: 10px; justify-content: center; }
+        #game { 
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        h1 { 
+            margin-bottom: 5px; 
+            font-size: 24px;
+            background: linear-gradient(45deg, #f1c40f, #e67e22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        canvas { 
+            border-radius: 12px; 
+            background: linear-gradient(135deg, #1a5c2a, #0d3b18);
+            cursor: pointer; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .info { 
+            margin-top: 10px; 
+            font-size: 13px; 
+            color: #888;
+        }
+        .win { 
+            color: #f1c40f; 
+            font-size: 20px; 
+            font-weight: bold; 
+            margin-top: 10px;
+            text-shadow: 0 0 20px rgba(241,196,15,0.5);
+        }
+        .btn-row { 
+            margin-top: 12px; 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            flex-wrap: wrap;
+        }
         button {
-            padding: 10px 20px;
-            background: #27ae60;
+            padding: 12px 24px;
             color: white;
-            border: none;
-            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.3s;
+            font-weight: bold;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
         }
-        button:hover { background: #2ecc71; }
-        button.secondary { background: #3498db; }
-        button.secondary:hover { background: #2980b9; }
-        button.danger { background: #e74c3c; }
-        button.danger:hover { background: #c0392b; }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .btn-new { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .btn-new:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .btn-spectate { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+        .btn-spectate:hover { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .btn-share { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .btn-share:hover { background: linear-gradient(135deg, #2980b9, #3498db); }
         .spectator-badge {
             display: inline-block;
-            background: #8e44ad;
-            padding: 4px 10px;
-            border-radius: 12px;
+            background: rgba(142,68,173,0.3);
+            border: 1px solid rgba(142,68,173,0.5);
+            padding: 5px 12px;
+            border-radius: 15px;
             font-size: 12px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -55,64 +97,18 @@
         <div class="info">🖱 Клик — выбрать | Клик — переместить | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
         <div class="btn-row">
-            <button onclick="init()">🔄 Новая игра</button>
-            <button class="secondary" onclick="toggleSpectate()">👁 Наблюдать</button>
-            <button class="secondary" onclick="shareGame()">🔗 Поделиться</button>
+            <button class="btn-new" onclick="init()">🔄 Новая игра</button>
+            <button class="btn-spectate" onclick="toggleSpectate()">👁 Наблюдать</button>
+            <button class="btn-share" onclick="shareGame()">🔗 Поделиться</button>
         </div>
     </div>
     <script>
-        // Discord Activity SDK
-        let discordSdk = null;
-        let instanceId = null;
-        let playerId = null;
-        let isSpectating = false;
-        let spectatingPlayer = null;
-
-        try {
-            if (window.DiscordSDK) {
-                discordSdk = new DiscordSDK('1066846885995892767');
-                setupDiscord();
-            }
-        } catch(e) {
-            console.log('Not in Discord Activity');
-        }
-
-        async function setupDiscord() {
-            try {
-                await discordSdk.ready();
-                const { user } = await discordSdk.commands.authenticate({
-                    client_id: '1066846885995892767',
-                    response_type: 'token',
-                    scope: ['identify']
-                });
-                playerId = user.id;
-                
-                // Получаем instanceId
-                const instance = await discordSdk.commands.getInstanceConnectedParticipants();
-                instanceId = instance.instance_id;
-                
-                // Подписываемся на события
-                discordSdk.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', (data) => {
-                    updateParticipants(data.participants);
-                });
-                
-                console.log('Discord SDK ready');
-            } catch(e) {
-                console.log('Discord auth skipped');
-            }
-        }
-
-        function updateParticipants(participants) {
-            // Можно показывать список игроков
-        }
-
-        // Игровая логика
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
         function resize() {
-            const maxW = Math.min(window.innerWidth - 20, 900);
-            const maxH = Math.min(window.innerHeight - 220, 600);
+            const maxW = Math.min(window.innerWidth - 40, 900);
+            const maxH = Math.min(window.innerHeight - 260, 600);
             canvas.width = maxW;
             canvas.height = maxH;
             drawAll();
@@ -127,9 +123,9 @@
         let columns, foundations, stock, waste;
         let selectedCard = null;
         let selectedCol = -1;
-        let selectedFromFoundation = null;
         let win = false;
         let moves = 0;
+        let isSpectating = false;
 
         class Card {
             constructor(suit, rank, faceUp = false) {
@@ -143,22 +139,32 @@
             
             draw() {
                 if (this.faceUp) {
-                    ctx.fillStyle = 'white';
+                    // Тень карты
+                    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                    ctx.shadowBlur = 5;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                    
+                    ctx.fillStyle = '#fefefe';
                     ctx.fillRect(this.x, this.y, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#333';
+                    ctx.shadowColor = 'transparent';
+                    
+                    ctx.strokeStyle = '#ccc';
                     ctx.lineWidth = 1;
                     ctx.strokeRect(this.x, this.y, CARD_W, CARD_H);
                     ctx.fillStyle = this.color;
                     ctx.font = 'bold 14px "Segoe UI"';
-                    ctx.fillText(this.rank, this.x+4, this.y+20);
+                    ctx.fillText(this.rank, this.x+5, this.y+20);
                     ctx.font = '20px Arial';
-                    ctx.fillText(this.suit, this.x+4, this.y+46);
+                    ctx.fillText(this.suit, this.x+5, this.y+46);
                 } else {
-                    ctx.fillStyle = '#2980b9';
+                    ctx.fillStyle = '#3498db';
                     ctx.fillRect(this.x, this.y, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#1a5276';
+                    ctx.strokeStyle = '#2980b9';
                     ctx.lineWidth = 1;
                     ctx.strokeRect(this.x, this.y, CARD_W, CARD_H);
+                    ctx.fillStyle = '#2980b9';
+                    ctx.fillRect(this.x+10, this.y+10, CARD_W-20, CARD_H-20);
                 }
                 if (this === selectedCard) {
                     ctx.strokeStyle = '#f1c40f';
@@ -192,7 +198,7 @@
             }
             win = true;
             document.getElementById('winMessage').innerHTML = 
-                `<div class="win">🎉 Вы выиграли за ${moves} ходов!</div>`;
+                `<div class="win">🎉 Победа за ${moves} ходов!</div>`;
             return true;
         }
 
@@ -216,18 +222,15 @@
             foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
             selectedCard = null;
             selectedCol = -1;
-            selectedFromFoundation = null;
             win = false;
             moves = 0;
             document.getElementById('winMessage').innerHTML = '';
             drawAll();
-            broadcastState();
         }
 
         function drawAll() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Foundations
             let fx = 15, fy = 12;
             for (let s of SUITS) {
                 const pile = foundations[s];
@@ -236,7 +239,7 @@
                     pile[pile.length-1].y = fy;
                     pile[pile.length-1].draw();
                 } else {
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                     ctx.setLineDash([4, 4]);
                     ctx.strokeRect(fx, fy, CARD_W, CARD_H);
                     ctx.setLineDash([]);
@@ -244,15 +247,14 @@
                 fx += CARD_W + 6;
             }
             
-            // Stock & Waste
             const sx = fx + 15, sy = fy;
             if (stock.length) {
-                ctx.fillStyle = '#2980b9';
+                ctx.fillStyle = '#3498db';
                 ctx.fillRect(sx, sy, CARD_W, CARD_H);
-                ctx.strokeStyle = '#1a5276';
+                ctx.strokeStyle = '#2980b9';
                 ctx.strokeRect(sx, sy, CARD_W, CARD_H);
             } else {
-                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                 ctx.setLineDash([4, 4]);
                 ctx.strokeRect(sx, sy, CARD_W, CARD_H);
                 ctx.setLineDash([]);
@@ -263,7 +265,6 @@
                 waste[waste.length-1].draw();
             }
             
-            // Columns
             let cx = 15, cy = 115;
             for (let i = 0; i < 7; i++) {
                 const col = columns[i];
@@ -278,7 +279,7 @@
             }
             
             ctx.font = '12px Arial';
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
             ctx.fillText(`Ходов: ${moves}`, canvas.width - 90, canvas.height - 8);
         }
 
@@ -293,7 +294,6 @@
             const stockX = 15 + 4*(CARD_W+6) + 15;
             const stockY = 12;
             
-            // Click stock
             if (mx >= stockX && mx <= stockX+CARD_W && my >= stockY && my <= stockY+CARD_H) {
                 if (stock.length) {
                     waste.push(stock.pop());
@@ -301,42 +301,26 @@
                 } else {
                     while (waste.length) { stock.push(waste.pop()); stock[stock.length-1].faceUp = false; }
                 }
-                resetSelection();
-                drawAll();
-                broadcastState();
-                return;
+                selectedCard = null; selectedCol = -1;
+                drawAll(); return;
             }
             
-            // Click waste
             if (waste.length) {
-                const wasteX = stockX + CARD_W + 6;
                 const wasteCard = waste[waste.length-1];
-                if (mx >= wasteX && mx <= wasteX+CARD_W && my >= stockY && my <= stockY+CARD_H) {
+                if (wasteCard.contains(mx, my)) {
                     if (selectedCard && selectedCol >= 0 && canPlaceOnColumn(wasteCard, columns[selectedCol])) {
                         columns[selectedCol].push(waste.pop());
-                        resetSelection();
-                        moves++;
-                        checkWin();
-                        drawAll();
-                        broadcastState();
-                        return;
+                        selectedCard = null; selectedCol = -1;
+                        moves++; checkWin(); drawAll(); return;
                     }
                     if (!selectedCard && canPlaceOnFoundation(wasteCard)) {
                         foundations[wasteCard.suit].push(waste.pop());
-                        resetSelection();
-                        moves++;
-                        checkWin();
-                        drawAll();
-                        broadcastState();
-                        return;
+                        selectedCard = null; selectedCol = -1;
+                        moves++; checkWin(); drawAll(); return;
                     }
-                    resetSelection();
-                    drawAll();
-                    return;
                 }
             }
             
-            // Click columns
             let colX = 15, colY = 115;
             for (let i = 0; i < 7; i++) {
                 const col = columns[i];
@@ -348,36 +332,26 @@
                                 const moved = col.splice(j);
                                 columns[selectedCol].push(...moved);
                                 if (col.length && !col[col.length-1].faceUp) col[col.length-1].faceUp = true;
-                                resetSelection();
-                                moves++;
-                                checkWin();
-                                drawAll();
-                                broadcastState();
-                                return;
+                                selectedCard = null; selectedCol = -1;
+                                moves++; checkWin(); drawAll(); return;
                             }
                         }
                         if (canPlaceOnFoundation(col[j])) {
                             foundations[col[j].suit].push(col[j]);
                             col.splice(j, 1);
                             if (col.length && !col[col.length-1].faceUp) col[col.length-1].faceUp = true;
-                            resetSelection();
-                            moves++;
-                            checkWin();
-                            drawAll();
-                            broadcastState();
-                            return;
+                            selectedCard = null; selectedCol = -1;
+                            moves++; checkWin(); drawAll(); return;
                         }
-                        selectedCard = col[j];
-                        selectedCol = i;
-                        drawAll();
-                        return;
+                        selectedCard = col[j]; selectedCol = i;
+                        drawAll(); return;
                     }
                     y += col[j].faceUp ? 26 : 14;
                 }
                 colX += CARD_W + 6;
             }
             
-            resetSelection();
+            selectedCard = null; selectedCol = -1;
             drawAll();
         });
 
@@ -389,58 +363,29 @@
             
             let colX = 15, colY = 115;
             for (let i = 0; i < 7; i++) {
-                const col = columns[i];
-                if (col.length && col[col.length-1].contains(mx, my)) {
-                    if (canPlaceOnFoundation(col[col.length-1])) {
-                        foundations[col[col.length-1].suit].push(col.pop());
-                        if (col.length && !col[col.length-1].faceUp) col[col.length-1].faceUp = true;
-                        resetSelection();
-                        moves++;
-                        checkWin();
-                        drawAll();
-                        broadcastState();
-                        return;
+                if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
+                    const card = columns[i][columns[i].length-1];
+                    if (canPlaceOnFoundation(card)) {
+                        foundations[card.suit].push(columns[i].pop());
+                        if (columns[i].length && !columns[i][columns[i].length-1].faceUp) 
+                            columns[i][columns[i].length-1].faceUp = true;
+                        selectedCard = null; selectedCol = -1;
+                        moves++; checkWin(); drawAll(); return;
                     }
                 }
                 colX += CARD_W + 6;
             }
         });
 
-        function resetSelection() {
-            selectedCard = null;
-            selectedCol = -1;
-            selectedFromFoundation = null;
-        }
-
-        function broadcastState() {
-            if (discordSdk) {
-                try {
-                    discordSdk.commands.setActivity({
-                        state: JSON.stringify({
-                            columns: columns.map(c => c.length),
-                            foundations: Object.fromEntries(Object.entries(foundations).map(([k,v]) => [k, v.length])),
-                            stockLen: stock.length,
-                            wasteLen: waste.length,
-                            moves: moves,
-                            win: win
-                        })
-                    });
-                } catch(e) {}
-            }
-        }
-
         function toggleSpectate() {
             isSpectating = !isSpectating;
             document.getElementById('spectatorBadge').innerHTML = isSpectating ? 
                 '<div class="spectator-badge">👁 Режим наблюдения</div>' : '';
-            resetSelection();
-            drawAll();
         }
 
         function shareGame() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Ссылка скопирована! Отправьте её друзьям.');
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('🔗 Ссылка скопирована!');
             });
         }
 
