@@ -14,7 +14,7 @@
         }
         #game { text-align: center; background: rgba(0,0,0,0.3); padding: 20px;
             border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px); }
+            backdrop-filter: blur(10px); max-width: 950px; }
         h1 { margin-bottom: 5px; font-size: 24px;
             background: linear-gradient(45deg, #f1c40f, #e67e22);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -28,38 +28,54 @@
             transition: all 0.3s; backdrop-filter: blur(5px); }
         button:hover { transform: translateY(-2px); }
         .btn-new { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .btn-spectate { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
+        .btn-share { background: linear-gradient(135deg, #3498db, #2980b9); }
         .game-id { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px;
             font-size: 14px; margin: 10px 0; }
         .game-id span { color: #f1c40f; font-weight: bold; }
         .spectator-count { color: #9b59b6; font-size: 13px; }
+        input { padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3); color: white; font-size: 14px; text-align: center; width: 140px; }
+        #joinSection { margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div id="game">
         <h1>🃏 Пасьянс Косынка</h1>
+        
         <div class="game-id" id="gameIdDisplay" style="display:none;">
             ID игры: <span id="gameIdText"></span>
             <div class="spectator-count" id="spectatorCount"></div>
         </div>
+        
+        <div id="joinSection">
+            <input type="text" id="joinGameId" placeholder="ID игры">
+            <button class="btn-spectate" onclick="joinGame()">👁 Смотреть</button>
+        </div>
+        
         <canvas id="canvas"></canvas>
-        <div class="info">🖱 Клик — играть | Двойной клик — авто в стопку</div>
+        <div class="info">🖱 Клик — выбрать | Клик — переместить | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
+        
         <div class="btn-row">
-            <button class="btn-new" onclick="init()">🔄 Новая игра</button>
+            <button class="btn-new" onclick="createGame()">🔄 Новая игра</button>
+            <button class="btn-share" onclick="shareGame()">🔗 Поделиться</button>
         </div>
     </div>
+
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);
-        const gameId = urlParams.get('game');
-        const isWatchMode = urlParams.get('watch') === 'true';
+        const urlGameId = urlParams.get('game');
+        const urlWatch = urlParams.get('watch') === 'true';
         
         let ws = null;
-        let playerId = 'player_' + Math.random().toString(36).substr(2, 9);
-        let isHost = !isWatchMode;
+        let playerId = 'p_' + Math.random().toString(36).substr(2, 9);
+        let gameId = urlGameId || null;
+        let isHost = !urlWatch && !!urlGameId;
+        let isWatching = urlWatch;
         
         const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -70,6 +86,7 @@
         let selectedCol = -1;
         let win = false;
         let moves = 0;
+        let gameStarted = false;
 
         class Card {
             constructor(suit, rank, faceUp = false) {
@@ -81,11 +98,17 @@
             draw() {
                 if (this.faceUp) {
                     ctx.fillStyle = '#fefefe'; ctx.fillRect(this.x, this.y, CARD_W, CARD_H);
+                    ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.strokeRect(this.x, this.y, CARD_W, CARD_H);
                     ctx.fillStyle = this.color; ctx.font = 'bold 14px "Segoe UI"';
                     ctx.fillText(this.rank, this.x+5, this.y+20);
                     ctx.font = '20px Arial'; ctx.fillText(this.suit, this.x+5, this.y+46);
                 } else {
                     ctx.fillStyle = '#3498db'; ctx.fillRect(this.x, this.y, CARD_W, CARD_H);
+                    ctx.strokeStyle = '#2980b9'; ctx.strokeRect(this.x, this.y, CARD_W, CARD_H);
+                }
+                if (this === selectedCard) {
+                    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3;
+                    ctx.strokeRect(this.x-2, this.y-2, CARD_W+4, CARD_H+4); ctx.lineWidth = 1;
                 }
             }
             contains(mx, my) { return mx >= this.x && mx <= this.x+CARD_W && my >= this.y && my <= this.y+CARD_H; }
@@ -107,6 +130,7 @@
             for (let s of SUITS) if (foundations[s].length !== 13) return false;
             win = true;
             document.getElementById('winMessage').innerHTML = `<div class="win">🎉 Победа за ${moves} ходов!</div>`;
+            if (ws) sendState();
             return true;
         }
 
@@ -129,22 +153,29 @@
             foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
             selectedCard = null; selectedCol = -1;
             win = false; moves = 0;
+            gameStarted = true;
             document.getElementById('winMessage').innerHTML = '';
             drawAll();
-            sendState();
+            if (ws && isHost) sendState();
         }
 
         function drawAll() {
+            if (!gameStarted) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             let fx = 15, fy = 12;
             for (let s of SUITS) {
                 if (foundations[s].length) {
                     foundations[s][foundations[s].length-1].x = fx;
                     foundations[s][foundations[s].length-1].y = fy;
                     foundations[s][foundations[s].length-1].draw();
+                } else {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.setLineDash([4,4]);
+                    ctx.strokeRect(fx, fy, CARD_W, CARD_H); ctx.setLineDash([]);
                 }
                 fx += CARD_W + 6;
             }
+            
             let cx = 15, cy = 115;
             for (let i = 0; i < 7; i++) {
                 let y = cy;
@@ -160,14 +191,8 @@
         function sendState() {
             if (ws && isHost && gameId) {
                 ws.send(JSON.stringify({
-                    action: 'move',
-                    game_id: gameId,
-                    player_id: playerId,
-                    state: {
-                        foundations: Object.fromEntries(Object.entries(foundations).map(([k,v]) => [k, v.length])),
-                        moves: moves,
-                        win: win
-                    }
+                    action: 'move', game_id: gameId, player_id: playerId,
+                    state: { foundations: Object.fromEntries(Object.entries(foundations).map(([k,v]) => [k, v.length])), moves, win }
                 }));
             }
         }
@@ -180,46 +205,93 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Подключение к WebSocket
-        if (gameId) {
-            document.getElementById('gameIdText').textContent = gameId;
-            document.getElementById('gameIdDisplay').style.display = 'block';
-            
+        function connectWebSocket(asHost) {
+            if (ws) ws.close();
             ws = new WebSocket('ws://localhost:8765');
             
             ws.onopen = () => {
                 ws.send(JSON.stringify({
-                    action: isHost ? 'create' : 'join',
-                    game_id: gameId,
-                    player_id: playerId
+                    action: asHost ? 'create' : 'join',
+                    game_id: gameId, player_id: playerId
                 }));
             };
             
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.type === 'created' || data.type === 'joined') {
-                    init();
+                    if (!gameStarted) init();
+                    document.getElementById('gameIdText').textContent = gameId;
+                    document.getElementById('gameIdDisplay').style.display = 'block';
+                    document.getElementById('joinSection').style.display = 'none';
                 }
-                if (data.type === 'state_update') {
-                    // Обновление для наблюдателя
-                    moves = data.state.moves;
-                    win = data.state.win;
+                if (data.type === 'state_update' && !isHost) {
+                    moves = data.state.moves; win = data.state.win;
                     drawAll();
                 }
-                if (data.spectators !== undefined) {
-                    document.getElementById('spectatorCount').textContent = 
-                        `👁 Зрителей: ${data.spectators}`;
+                if (data.spectators !== undefined || data.count !== undefined) {
+                    const count = data.spectators ?? data.count;
+                    document.getElementById('spectatorCount').textContent = `👁 Зрителей: ${count}`;
                 }
             };
-        } else {
+            
+            ws.onerror = () => { if (!gameStarted) init(); };
+            ws.onclose = () => { if (!gameStarted) init(); };
+        }
+
+        function createGame() {
+            gameId = 'G' + Math.random().toString(36).substr(2, 5).toUpperCase();
+            isHost = true;
+            isWatching = false;
+            connectWebSocket(true);
             init();
         }
 
+        function joinGame() {
+            const inputId = document.getElementById('joinGameId').value.trim().toUpperCase();
+            if (!inputId) return alert('Введите ID игры');
+            gameId = inputId;
+            isHost = false;
+            isWatching = true;
+            connectWebSocket(false);
+        }
+
+        function shareGame() {
+            if (gameId) {
+                navigator.clipboard.writeText(gameId).then(() => alert('ID скопирован: ' + gameId));
+            } else {
+                alert('Сначала создайте игру!');
+            }
+        }
+
         canvas.addEventListener('click', (e) => {
-            if (win || !isHost) return;
+            if (win || !isHost || !gameStarted) return;
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left;
             const my = e.clientY - rect.top;
+            
+            const stockX = 15 + 4*(CARD_W+6) + 15;
+            const stockY = 12;
+            
+            if (mx >= stockX && mx <= stockX+CARD_W && my >= stockY && my <= stockY+CARD_H) {
+                if (stock.length) { waste.push(stock.pop()); waste[waste.length-1].faceUp = true; }
+                else { while (waste.length) { stock.push(waste.pop()); stock[stock.length-1].faceUp = false; } }
+                selectedCard = null; selectedCol = -1; drawAll(); sendState(); return;
+            }
+            
+            if (waste.length) {
+                const wc = waste[waste.length-1];
+                if (wc.contains(mx, my)) {
+                    if (selectedCard && selectedCol >= 0 && canPlaceOnColumn(wc, columns[selectedCol])) {
+                        columns[selectedCol].push(waste.pop()); selectedCard = null; selectedCol = -1;
+                        moves++; checkWin(); drawAll(); sendState(); return;
+                    }
+                    if (!selectedCard && canPlaceOnFoundation(wc)) {
+                        foundations[wc.suit].push(waste.pop()); selectedCard = null; selectedCol = -1;
+                        moves++; checkWin(); drawAll(); sendState(); return;
+                    }
+                    selectedCard = null; selectedCol = -1; drawAll(); return;
+                }
+            }
             
             let colX = 15, colY = 115;
             for (let i = 0; i < 7; i++) {
@@ -230,26 +302,32 @@
                             const moved = columns[i].splice(j);
                             columns[selectedCol].push(...moved);
                             if (columns[i].length && !columns[i][columns[i].length-1].faceUp) columns[i][columns[i].length-1].faceUp = true;
-                            selectedCard = null; selectedCol = -1;
-                            moves++; checkWin(); drawAll(); sendState(); return;
+                            selectedCard = null; selectedCol = -1; moves++; checkWin(); drawAll(); sendState(); return;
                         }
                         if (canPlaceOnFoundation(columns[i][j])) {
                             foundations[columns[i][j].suit].push(columns[i][j]);
                             columns[i].splice(j, 1);
                             if (columns[i].length && !columns[i][columns[i].length-1].faceUp) columns[i][columns[i].length-1].faceUp = true;
-                            selectedCard = null; selectedCol = -1;
-                            moves++; checkWin(); drawAll(); sendState(); return;
+                            selectedCard = null; selectedCol = -1; moves++; checkWin(); drawAll(); sendState(); return;
                         }
-                        selectedCard = columns[i][j]; selectedCol = i;
-                        drawAll(); return;
+                        selectedCard = columns[i][j]; selectedCol = i; drawAll(); return;
                     }
                     y += columns[i][j].faceUp ? 26 : 14;
                 }
                 colX += CARD_W + 6;
             }
-            selectedCard = null; selectedCol = -1;
-            drawAll();
+            selectedCard = null; selectedCol = -1; drawAll();
         });
+
+        // Авто-запуск если есть ID в URL
+        if (urlGameId) {
+            isHost = !urlWatch;
+            isWatching = urlWatch;
+            connectWebSocket(isHost);
+            if (!urlWatch) init();
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
