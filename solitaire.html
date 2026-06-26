@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пасьянс</title>
+    <style>
+        body { background: #2c3e50; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        canvas { background: #27ae60; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Простая реализация пасьянса (упрощённая, для демонстрации)
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1000;
+        canvas.height = 700;
+
+        const suits = ['♠','♥','♦','♣'];
+        const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+        const cardW = 71, cardH = 96;
+        let deck, columns, foundations, stock, waste;
+        let selectedCard = null;
+        let selectedPile = null;
+
+        class Card {
+            constructor(suit, rank, faceUp = false) {
+                this.suit = suit;
+                this.rank = rank;
+                this.faceUp = faceUp;
+                this.x = 0; this.y = 0;
+            }
+            get color() { return (this.suit === '♥' || this.suit === '♦') ? 'red' : 'black'; }
+            draw() {
+                if (this.faceUp) {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(this.x, this.y, cardW, cardH);
+                    ctx.strokeStyle = 'black';
+                    ctx.strokeRect(this.x, this.y, cardW, cardH);
+                    ctx.fillStyle = this.color;
+                    ctx.font = '18px Arial';
+                    ctx.fillText(this.rank, this.x+5, this.y+25);
+                    ctx.font = '24px Arial';
+                    ctx.fillText(this.suit, this.x+5, this.y+55);
+                } else {
+                    ctx.fillStyle = '#3498db';
+                    ctx.fillRect(this.x, this.y, cardW, cardH);
+                    ctx.strokeStyle = 'black';
+                    ctx.strokeRect(this.x, this.y, cardW, cardH);
+                }
+            }
+            contains(mx, my) {
+                return mx >= this.x && mx <= this.x+cardW && my >= this.y && my <= this.y+cardH;
+            }
+        }
+
+        function shuffle(arr) { for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+        function initGame() {
+            deck = []; columns = [[],[],[],[],[],[],[]]; foundations = {♠:[],♥:[],♦:[],♣:[]}; stock = []; waste = [];
+            for(let suit of suits) for(let rank of ranks) deck.push(new Card(suit, rank));
+            deck = shuffle(deck);
+            for(let i=0;i<7;i++) for(let j=i;j<7;j++) {
+                const card = deck.pop();
+                if(j===i) card.faceUp = true;
+                columns[j].push(card);
+            }
+            stock = deck;
+            drawAll();
+        }
+
+        function drawAll() {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            // foundations
+            let fx = 20, fy = 20;
+            for(let suit of suits) {
+                const pile = foundations[suit];
+                if(pile.length) {
+                    const top = pile[pile.length-1];
+                    top.x = fx; top.y = fy;
+                    top.draw();
+                } else {
+                    ctx.strokeStyle = 'white';
+                    ctx.strokeRect(fx,fy,cardW,cardH);
+                }
+                fx += cardW + 10;
+            }
+            // stock & waste
+            const stockX = fx + 30, stockY = fy;
+            if(stock.length) {
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(stockX, stockY, cardW, cardH);
+                ctx.strokeStyle = 'black';
+                ctx.strokeRect(stockX, stockY, cardW, cardH);
+            } else {
+                ctx.strokeStyle = 'white';
+                ctx.strokeRect(stockX, stockY, cardW, cardH);
+            }
+            const wasteX = stockX + cardW + 10;
+            if(waste.length) {
+                const top = waste[waste.length-1];
+                top.x = wasteX; top.y = stockY;
+                top.draw();
+            }
+            // columns
+            let colX = 20, colY = 140;
+            for(let i=0;i<7;i++) {
+                const col = columns[i];
+                let y = colY;
+                for(let j=0;j<col.length;j++) {
+                    const card = col[j];
+                    card.x = colX;
+                    card.y = y;
+                    card.draw();
+                    y += card.faceUp ? 30 : 15;
+                }
+                colX += cardW + 10;
+            }
+        }
+
+        canvas.onclick = function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            // Check stock
+            if(mx >= 20+ (suits.length)*(cardW+10)+30 && mx <= 20+ (suits.length)*(cardW+10)+30+cardW && my >= 20 && my <= 20+cardH) {
+                if(stock.length) { const c = stock.pop(); c.faceUp = true; waste.push(c); }
+                else { while(waste.length) { const c = waste.pop(); c.faceUp = false; stock.push(c); } }
+                drawAll(); return;
+            }
+            // Check columns
+            let colX = 20, colY = 140;
+            for(let i=0;i<7;i++) {
+                const col = columns[i];
+                if(col.length) {
+                    const last = col[col.length-1];
+                    if(last.contains(mx, my)) {
+                        if(selectedCard) {
+                            // move logic (simplified: just move last)
+                            selectedPile.push(selectedCard);
+                            selectedCard = null; selectedPile = null;
+                        } else {
+                            selectedCard = last;
+                            selectedPile = col;
+                        }
+                        drawAll(); return;
+                    }
+                }
+                colX += cardW + 10;
+            }
+            // foundations click (move to foundation)
+            // ... (simplified)
+        };
+
+        initGame();
+    </script>
+</body>
+</html>
