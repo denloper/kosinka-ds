@@ -2,309 +2,525 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🃏 Пасьянс Косынка</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🃏 Пасьянс Косынка | Discord Activity</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #2d1b69;
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; font-family: 'Segoe UI', Arial, sans-serif;
-            color: white; user-select: none;
+            background: #0d111c; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            color: #e0e0e0; 
+            user-select: none;
+            background-image: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
+            overflow: hidden;
         }
         #game { 
             text-align: center; 
-            background: rgba(0,0,0,0.3); 
-            padding: 20px;
-            border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1);
-            width: 95vw; max-width: 1100px;
+            background: rgba(18, 25, 42, 0.4); 
+            backdrop-filter: blur(8px);
+            padding: 25px 30px;
+            border-radius: 24px; 
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            width: 95vw; 
+            max-width: 1120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1 { 
-            margin-bottom: 8px; font-size: 28px;
-            background: linear-gradient(45deg, #f1c40f, #e67e22);
-            background-clip: text; -webkit-background-clip: text; color: transparent;
+            margin-bottom: 12px; 
+            font-size: 32px;
+            letter-spacing: 2px;
+            color: #ebc25e; 
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+        }
+        #spectatorBadge {
+            margin-bottom: 10px;
+            font-size: 14px;
+            min-height: 20px;
         }
         canvas { 
-            border-radius: 12px; background: #076324;
-            cursor: grab; box-shadow: 0 8px 32px rgba(0,0,0,0.5); width: 100%;
+            border-radius: 16px; 
+            background: #111c2f; 
+            cursor: grab; 
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6); 
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            display: block;
+            max-width: 100%;
+            height: auto;
         }
         canvas:active { cursor: grabbing; }
-        .info { margin-top: 10px; font-size: 14px; color: #aaa; }
-        .win { color: #f1c40f; font-size: 24px; font-weight: bold; margin-top: 12px; }
-        .btn-row { margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { 
-            padding: 14px 28px; color: white; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;
-            transition: all 0.3s; backdrop-filter: blur(5px); 
+        .info { 
+            margin-top: 14px; 
+            font-size: 14px; 
+            color: #8d98b0; 
+            letter-spacing: 0.5px;
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .btn-new { background: linear-gradient(135deg, #27ae60, #2ecc71); }
-        .btn-spectate { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
-        .btn-share { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .win { 
+            color: #ebc25e; 
+            font-size: 26px; 
+            font-weight: bold; 
+            margin-top: 12px; 
+            animation: pulse 1.5s infinite; 
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .btn-row { 
+            margin-top: 15px; 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+        }
+        button { 
+            padding: 14px 32px; 
+            color: #e0e0e0; 
+            background: rgba(30, 45, 70, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: bold;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            transition: all 0.3s ease; 
+            backdrop-filter: blur(4px);
+            letter-spacing: 1px;
+        }
+        button:hover { 
+            transform: translateY(-3px); 
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #ebc25e;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15); 
+        }
+        .btn-new { color: #e6c86a; }
+        .btn-spectate { color: #b0bce6; }
+        .btn-share { color: #9aaec2; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div id="game">
-        <h1>🃏 Пасьянс Косынка</h1>
+        <h1>🕯 Пасьянс Косынка</h1>
+        <div id="spectatorBadge"></div>
         <canvas id="canvas"></canvas>
         <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
         <div class="btn-row">
-            <button class="btn-new" onclick="init()">🔄 Новая игра</button>
-            <button class="btn-share" onclick="shareGame()">🔗 Поделиться</button>
+            <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
+            <button class="btn-spectate" id="btnWatch" onclick="joinAsWatcher()">👁 Смотреть игру</button>
+            <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        const SUITS = ['♠','♥','♦','♣'];
+        // ============ НАСТРОЙКИ ============
+        const WS_URL = 'ws://localhost:8765';   // ← замени на публичный wss:// при деплое
+        const CARD_W = 85, CARD_H = 110;        // новые размеры карт
+        const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-        // Увеличенные карты
-        const CARD_W = 85, CARD_H = 110;
-        
-        let columns, foundations, stock, waste;
-        let win = false, moves = 0;
-        let isDragging = false, dragCards = [], dragFromCol = -1, dragFromWaste = false;
-        let dragOffsetX = 0, dragOffsetY = 0, mouseX = 0, mouseY = 0;
-        let hoverCol = -1, hoverSuit = null;
 
+        // ============ WebSocket и роли ============
+        const params = new URLSearchParams(window.location.search);
+        const gameId = params.get('game');
+        const isWatcher = params.has('watch');
+
+        let ws = null;
+        let isHost = false;
+        let spectatorsCount = 0;
+
+        // ============ ПЕРЕМЕННЫЕ ИГРЫ ============
+        let deck, stock, waste, foundations, columns;
+        let isDragging = false, dragCards = [], dragFromCol = -1, dragFromWaste = false;
+        let dragOffsetX, dragOffsetY, mouseX, mouseY;
+        let hoverCol = -1, hoverSuit = null;
+        let moves = 0, win = false;
+
+        // Генерация рубашки карт
+        const backPattern = document.createElement('canvas');
+        backPattern.width = CARD_W; backPattern.height = CARD_H;
+        const bctx = backPattern.getContext('2d');
+        bctx.fillStyle = '#0f1e36';
+        bctx.fillRect(0, 0, CARD_W, CARD_H);
+        bctx.strokeStyle = '#ebc25e';
+        bctx.lineWidth = 1.5;
+        bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+        bctx.fillStyle = '#d4af37';
+        const spacing = 20;
+        const offsetX = (CARD_W % spacing) / 2;
+        const offsetY = (CARD_H % spacing) / 2;
+        for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
+            for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
+                bctx.beginPath();
+                bctx.arc(x, y, 3, 0, Math.PI*2);
+                bctx.fill();
+            }
+        }
+
+        // ============ КАРТА ============
         class Card {
             constructor(suit, rank, faceUp = false) {
-                this.suit = suit; this.rank = rank; this.faceUp = faceUp;
-                this.x = 0; this.y = 0;
+                this.suit = suit;
+                this.rank = rank;
+                this.faceUp = faceUp;
+                this.x = 0;
+                this.y = 0;
             }
-            get color() { return (this.suit === '♥' || this.suit === '♦') ? '#c0392b' : '#1a1a1a'; }
+            get color() {
+                return (this.suit === '♥' || this.suit === '♦') ? '#8b302a' : '#382e26';
+            }
             get value() { return RANKS.indexOf(this.rank); }
             
             draw(dragX, dragY, isDrag) {
+                const ctx = canvas.getContext('2d');
                 let cx = isDrag ? dragX : this.x;
                 let cy = isDrag ? dragY : this.y;
                 
                 ctx.save();
-                if (isDrag) { ctx.globalAlpha = 0.9; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 15; }
+                if (isDrag) {
+                    ctx.globalAlpha = 0.95;
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 20;
+                }
                 
                 if (this.faceUp) {
-                    ctx.fillStyle = '#ffffff';
+                    // Основа
+                    ctx.fillStyle = '#f2ebdc';
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#333333';
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(cx, cy, CARD_W, CARD_H);
+                    // Внешняя рамка
+                    ctx.strokeStyle = '#3b2e26';
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2);
+                    ctx.strokeStyle = '#5d4a3c';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(cx+4, cy+4, CARD_W-8, CARD_H-8);
                     
+                    // Текст и масть
                     ctx.fillStyle = this.color;
-                    ctx.font = 'bold 22px "Georgia", "Times New Roman", serif';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText(this.rank, cx + 8, cy + 6);
-                    ctx.font = '26px "Segoe UI Symbol", Arial';
-                    ctx.fillText(this.suit, cx + 8, cy + 30);
+                    ctx.font = 'bold 24px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.rank, cx + 8, cy + 28);
+                    ctx.font = '20px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, cx + 8, cy + 52);
                     
+                    // Перевёрнутые
                     ctx.save();
                     ctx.translate(cx + CARD_W - 8, cy + CARD_H - 6);
                     ctx.rotate(Math.PI);
-                    ctx.font = 'bold 22px "Georgia", "Times New Roman", serif';
+                    ctx.font = 'bold 24px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.rank, 0, 0);
-                    ctx.font = '26px "Segoe UI Symbol", Arial';
-                    ctx.fillText(this.suit, 0, 24);
+                    ctx.font = '20px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, 0, 22);
                     ctx.restore();
                     
-                    ctx.font = '40px "Segoe UI Symbol", Arial';
+                    // Центральный символ
+                    ctx.globalAlpha = 0.4;
+                    ctx.font = '56px "Georgia", "Times New Roman", serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2 - 12);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2);
                     ctx.textAlign = 'start';
+                    ctx.globalAlpha = 1.0;
+                    
+                    // Медальон для фигур
+                    if (['J', 'Q', 'K'].includes(this.rank)) {
+                        ctx.beginPath();
+                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 22, 30, 0, 0, Math.PI*2);
+                        ctx.strokeStyle = '#d4af37';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
+                        ctx.fill();
+                    }
                 } else {
-                    ctx.fillStyle = '#2980b9';
-                    ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#1a5276';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(cx, cy, CARD_W, CARD_H);
-                    ctx.fillStyle = '#2471a3';
-                    ctx.fillRect(cx + 10, cy + 10, CARD_W - 20, CARD_H - 20);
+                    ctx.drawImage(backPattern, cx, cy);
                 }
                 ctx.restore();
             }
             
             contains(mx, my) {
-                return mx >= this.x && mx <= this.x + CARD_W && my >= this.y && my <= this.y + CARD_H;
+                return mx >= this.x && mx <= this.x + CARD_W &&
+                       my >= this.y && my <= this.y + CARD_H;
             }
         }
 
-        function canPlaceOnColumn(card, col) {
-            if (!col.length) return card.rank === 'K';
-            const top = col[col.length - 1];
-            return top.faceUp && top.color !== card.color && card.value === top.value - 1;
-        }
-
-        function canPlaceOnFoundation(card) {
-            const pile = foundations[card.suit];
-            if (!pile.length) return card.rank === 'A';
-            return card.value === pile[pile.length - 1].value + 1;
-        }
-
-        function checkWin() {
-            for (let s of SUITS) if (foundations[s].length !== 13) return false;
-            win = true;
-            document.getElementById('winMessage').innerHTML = `<div class="win">🎉 Победа за ${moves} ходов!</div>`;
-            return true;
-        }
-
+        // ============ ИНИЦИАЛИЗАЦИЯ ИГРЫ ============
         function init() {
-            let deck = [];
-            for (let s of SUITS) for (let r of RANKS) deck.push(new Card(s, r));
+            deck = [];
+            stock = [];
+            waste = [];
+            foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
+            columns = [[],[],[],[],[],[],[]];
+            moves = 0;
+            win = false;
+            document.getElementById('winMessage').innerHTML = '';
+            
+            for (let s of SUITS) {
+                for (let r of RANKS) {
+                    deck.push(new Card(s, r));
+                }
+            }
+            // Перемешивание
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
-            columns = [[],[],[],[],[],[],[]];
-            for (let i = 0; i < 7; i++) for (let j = i; j < 7; j++) {
-                const c = deck.pop(); if (j === i) c.faceUp = true;
-                columns[j].push(c);
+            
+            // Раздача
+            for (let col = 0; col < 7; col++) {
+                for (let row = 0; row <= col; row++) {
+                    const card = deck.pop();
+                    card.faceUp = (row === col);
+                    columns[col].push(card);
+                }
             }
-            stock = deck; waste = [];
-            foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
-            win = false; moves = 0;
-            document.getElementById('winMessage').innerHTML = '';
-            layoutCards(); drawAll();
+            stock = deck;
+            layoutCards();
+            drawAll();
+            sendGameState();  // отправить состояние наблюдателям
         }
 
+        function newGame() {
+            init();
+        }
+
+        // ============ РАСКЛАДКА КАРТ ============
         function layoutCards() {
-            let fx = 15, fy = 15;
+            // Базовые координаты (теперь под размеры 85x110)
+            const startX = 12, startY = 10;
+            let fx = startX, fy = startY;
+            const colStartX = startX, colStartY = 140;
+            const colSpacing = CARD_W + 8;
+            const cardOverlap = 30;   // перекрытие карт в стопке
+            
+            // Стопки фондов
             for (let s of SUITS) {
                 if (foundations[s].length) {
                     foundations[s][foundations[s].length-1].x = fx;
                     foundations[s][foundations[s].length-1].y = fy;
                 }
-                fx += CARD_W + 8;
+                fx += CARD_W + 5;
             }
-            let cx = 15, cy = 145;
-            for (let i = 0; i < 7; i++) {
-                let y = cy;
-                for (let j = 0; j < columns[i].length; j++) {
-                    columns[i][j].x = cx; columns[i][j].y = y;
-                    y += columns[i][j].faceUp ? 34 : 18;
-                }
-                cx += CARD_W + 8;
+            // Сток и отвал
+            let sx = startX + 4*(CARD_W+5) + 15;
+            if (stock.length) {
+                stock[stock.length-1].x = sx;
+                stock[stock.length-1].y = startY;
             }
             if (waste.length) {
-                waste[waste.length-1].x = 15 + 4*(CARD_W+8) + 20 + CARD_W + 8;
-                waste[waste.length-1].y = 15;
+                waste[waste.length-1].x = sx + CARD_W + 10;
+                waste[waste.length-1].y = startY;
+            }
+            // Столбцы
+            let cx = colStartX, cy = colStartY;
+            for (let i = 0; i < 7; i++) {
+                let col = columns[i];
+                for (let j = 0; j < col.length; j++) {
+                    col[j].x = cx;
+                    col[j].y = cy + j * cardOverlap;
+                }
+                cx += colSpacing;
             }
         }
 
+        // ============ ОТРИСОВКА ============
         function drawAll() {
+            const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            let fx = 15, fy = 15;
+            // Фонды
+            let fx = 12, fy = 10;
             for (let s of SUITS) {
-                if (foundations[s].length) foundations[s][foundations[s].length-1].draw();
-                else {
-                    ctx.strokeStyle = hoverSuit === s ? '#f1c40f' : 'rgba(255,255,255,0.3)';
+                if (foundations[s].length) {
+                    foundations[s][foundations[s].length-1].draw();
+                } else {
+                    ctx.strokeStyle = hoverSuit === s ? '#ebc25e' : 'rgba(255,255,255,0.08)';
                     ctx.lineWidth = hoverSuit === s ? 2 : 1;
-                    ctx.setLineDash([4,4]); ctx.strokeRect(fx, fy, CARD_W, CARD_H); ctx.setLineDash([]);
+                    ctx.setLineDash([6,6]);
+                    ctx.strokeRect(fx, fy, CARD_W, CARD_H);
+                    ctx.setLineDash([]);
                 }
-                fx += CARD_W + 8;
+                fx += CARD_W + 5;
             }
             
-            let sx = fx + 20;
-            if (stock.length) {
-                ctx.fillStyle = '#2980b9';
-                ctx.fillRect(sx, fy, CARD_W, CARD_H);
-                ctx.strokeStyle = '#1a5276';
-                ctx.strokeRect(sx, fy, CARD_W, CARD_H);
+            // Сток и отвал
+            let sx = 12 + 4*(CARD_W+5) + 15;
+            if (stock.length) stock[stock.length-1].draw();
+            else {
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.setLineDash([6,6]);
+                ctx.strokeRect(sx, 10, CARD_W, CARD_H);
+                ctx.setLineDash([]);
             }
+            if (waste.length) waste[waste.length-1].draw();
             
-            if (waste.length && !(isDragging && dragFromWaste)) waste[waste.length-1].draw();
-            
-            let cx = 15, cy = 145;
+            // Столбцы
+            let cx = 12, cy = 140;
+            const colSpacing = CARD_W + 8;
             for (let i = 0; i < 7; i++) {
                 if (hoverCol === i && isDragging) {
-                    ctx.fillStyle = 'rgba(241,196,15,0.2)';
-                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + 34 : cy;
+                    ctx.fillStyle = 'rgba(235, 194, 94, 0.1)';
+                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + 30 : cy;
                     ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
-                for (let j = 0; j < columns[i].length; j++) {
-                    if (isDragging && i === dragFromCol && j >= columns[i].length-dragCards.length && !dragFromWaste) continue;
-                    columns[i][j].draw();
+                for (let card of columns[i]) {
+                    card.draw();
                 }
-                cx += CARD_W + 8;
+                cx += colSpacing;
             }
             
-            if (isDragging && dragCards.length) {
-                for (let i = 0; i < dragCards.length; i++) {
-                    dragCards[i].draw(mouseX-dragOffsetX, mouseY-dragOffsetY + i*34, true);
-                }
+            // Инфо
+            ctx.font = '14px Georgia, serif';
+            ctx.fillStyle = 'rgba(141, 152, 176, 0.6)';
+            ctx.fillText(`Ходов: ${moves}`, canvas.width - 90, canvas.height - 10);
+            if (isWatcher || spectatorsCount > 0) {
+                ctx.fillText(`👁 ${spectatorsCount}`, canvas.width - 180, canvas.height - 10);
             }
-            
-            ctx.font = '12px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillText(`Ходов: ${moves}`, canvas.width - 80, canvas.height - 8);
         }
 
-        // Drag & Drop handlers
-        canvas.addEventListener('mousedown', (e) => {
+        // ============ ИГРОВАЯ ЛОГИКА ============
+        function canPlaceOnFoundation(card) {
+            const arr = foundations[card.suit];
+            if (arr.length === 0) return card.rank === 'A';
+            const top = arr[arr.length-1];
+            return RANKS.indexOf(card.rank) === RANKS.indexOf(top.rank) + 1;
+        }
+
+        function canPlaceOnColumn(card, column) {
+            if (column.length === 0) return card.rank === 'K';
+            const top = column[column.length-1];
+            return (top.color !== card.color) && (top.value === card.value + 1);
+        }
+
+        function checkWin() {
+            if (Object.values(foundations).every(arr => arr.length === 13)) {
+                win = true;
+                document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
+            }
+        }
+
+        // ============ УПРАВЛЕНИЕ МЫШЬЮ ============
+        canvas.onmousedown = (e) => {
             if (win) { init(); return; }
-            const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-            let sx = 15 + 4*(CARD_W+8) + 20;
-            if (mx >= sx && mx <= sx+CARD_W && my >= 15 && my <= 15+CARD_H) {
-                if (stock.length) { waste.push(stock.pop()); waste[waste.length-1].faceUp = true; }
-                else while (waste.length) { stock.push(waste.pop()); stock[stock.length-1].faceUp = false; }
-                layoutCards(); drawAll(); return;
+            if (isWatcher) return; // наблюдатели не могут двигать карты
+            const r = canvas.getBoundingClientRect();
+            const mx = e.clientX - r.left, my = e.clientY - r.top;
+            
+            // Клик по стоку
+            let sx = 12 + 4*(CARD_W+5) + 15;
+            if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
+                if (stock.length) {
+                    waste.push(stock.pop());
+                    waste[waste.length-1].faceUp = true;
+                } else {
+                    while (waste.length) {
+                        stock.push(waste.pop());
+                        stock[stock.length-1].faceUp = false;
+                    }
+                }
+                layoutCards();
+                drawAll();
+                sendGameState();
+                return;
             }
+            
+            // Клик по отвалу
             if (waste.length && waste[waste.length-1].contains(mx, my)) {
-                isDragging = true; dragCards = [waste[waste.length-1]]; dragFromCol = -1; dragFromWaste = true;
-                dragOffsetX = mx - waste[waste.length-1].x; dragOffsetY = my - waste[waste.length-1].y;
-                mouseX = mx; mouseY = my; return;
+                startDrag([waste[waste.length-1]], -1, true, mx, my);
+                return;
             }
-            let cx = 15, cy = 145;
+            
+            // Клик по столбцам
+            let cx = 12, cy = 140;
+            const colSpacing = CARD_W + 8;
             for (let i = 0; i < 7; i++) {
                 for (let j = columns[i].length-1; j >= 0; j--) {
                     if (columns[i][j].faceUp && columns[i][j].contains(mx, my)) {
-                        isDragging = true; dragCards = columns[i].slice(j); dragFromCol = i; dragFromWaste = false;
-                        dragOffsetX = mx - columns[i][j].x; dragOffsetY = my - columns[i][j].y;
-                        mouseX = mx; mouseY = my; return;
+                        startDrag(columns[i].slice(j), i, false, mx, my);
+                        return;
                     }
                 }
-                cx += CARD_W + 8;
+                cx += colSpacing;
             }
-        });
+        };
 
-        canvas.addEventListener('mousemove', (e) => {
-            const r = canvas.getBoundingClientRect(); mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
+        function startDrag(cards, col, wasteFlag, mx, my) {
+            if (isWatcher) return;
+            isDragging = true;
+            dragCards = cards;
+            dragFromCol = col;
+            dragFromWaste = wasteFlag;
+            dragOffsetX = mx - cards[0].x;
+            dragOffsetY = my - cards[0].y;
+            mouseX = mx;
+            mouseY = my;
+        }
+
+        canvas.onmousemove = (e) => {
+            const r = canvas.getBoundingClientRect();
+            mouseX = e.clientX - r.left;
+            mouseY = e.clientY - r.top;
             if (!isDragging) return;
-            hoverCol = -1; hoverSuit = null;
-            let fx = 15, fy = 15;
+            
+            hoverCol = -1;
+            hoverSuit = null;
+            // Проверка наведения на фонды
+            let fx = 12, fy = 10;
             for (let s of SUITS) {
-                if (mouseX >= fx && mouseX <= fx+CARD_W && mouseY >= fy && mouseY <= fy+CARD_H) hoverSuit = s;
-                fx += CARD_W + 8;
+                if (mouseX >= fx && mouseX <= fx+CARD_W && mouseY >= fy && mouseY <= fy+CARD_H)
+                    hoverSuit = s;
+                fx += CARD_W + 5;
             }
-            let cx = 15, cy = 145;
+            // Проверка наведения на столбцы
+            let cx = 12, cy = 140;
+            const colSpacing = CARD_W + 8;
             for (let i = 0; i < 7; i++) {
-                if (mouseX >= cx && mouseX <= cx+CARD_W && mouseY >= cy) hoverCol = i;
-                cx += CARD_W + 8;
+                if (mouseX >= cx && mouseX <= cx+CARD_W && mouseY >= cy)
+                    hoverCol = i;
+                cx += colSpacing;
             }
             drawAll();
-        });
+        };
 
-        canvas.addEventListener('mouseup', () => {
-            if (!isDragging) return;
+        canvas.onmouseup = () => {
+            if (!isDragging || isWatcher) return;
             if (hoverSuit && dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
                 foundations[hoverSuit].push(dragCards[0]);
-                if (dragFromWaste) waste.pop(); else columns[dragFromCol].splice(columns[dragFromCol].length-1);
-                moves++; checkWin();
-            } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
-                if (dragFromWaste) columns[hoverCol].push(waste.pop());
-                else { const m = columns[dragFromCol].splice(columns[dragFromCol].length-dragCards.length); columns[hoverCol].push(...m); }
+                if (dragFromWaste) waste.pop();
+                else columns[dragFromCol].splice(columns[dragFromCol].length-1);
                 if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
                     columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
-                moves++; checkWin();
+                moves++;
+                checkWin();
+            } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
+                if (dragFromWaste) columns[hoverCol].push(waste.pop());
+                else {
+                    const moved = columns[dragFromCol].splice(columns[dragFromCol].length-dragCards.length);
+                    columns[hoverCol].push(...moved);
+                }
+                if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                    columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                moves++;
+                checkWin();
             }
-            isDragging = false; dragCards = []; dragFromCol = -1; dragFromWaste = false;
-            hoverCol = -1; hoverSuit = null; layoutCards(); drawAll();
-        });
+            isDragging = false;
+            dragCards = [];
+            dragFromCol = -1;
+            dragFromWaste = false;
+            hoverCol = -1;
+            hoverSuit = null;
+            layoutCards();
+            drawAll();
+            sendGameState();
+        };
 
-        canvas.addEventListener('dblclick', (e) => {
-            if (win) return;
-            const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+        canvas.ondblclick = (e) => {
+            if (win || isWatcher) return;
+            const r = canvas.getBoundingClientRect();
+            const mx = e.clientX - r.left, my = e.clientY - r.top;
             for (let i = 0; i < 7; i++) {
                 if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
                     const card = columns[i][columns[i].length-1];
@@ -312,23 +528,142 @@
                         foundations[card.suit].push(columns[i].pop());
                         if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
                             columns[i][columns[i].length-1].faceUp = true;
-                        moves++; checkWin(); layoutCards(); drawAll(); return;
+                        moves++;
+                        checkWin();
+                        layoutCards();
+                        drawAll();
+                        sendGameState();
+                        return;
                     }
                 }
             }
-        });
+        };
 
+        // ============ РАЗМЕР ХОЛСТА ============
         function resize() {
-            canvas.width = Math.min(window.innerWidth - 40, 1050);
+            canvas.width = Math.min(window.innerWidth - 40, 1120);
             canvas.height = Math.min(window.innerHeight - 220, 700);
+            layoutCards();
             drawAll();
         }
         window.addEventListener('resize', resize);
-        resize();
 
-        function shareGame() { navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!')); }
+        // ============ ФУНКЦИИ ДЛЯ МУЛЬТИПЛЕЕРА ============
+        function getGameState() {
+            // Сохраняем состояние для синхронизации (только нужные данные)
+            return {
+                foundations: {
+                    '♠': foundations['♠'].length,
+                    '♥': foundations['♥'].length,
+                    '♦': foundations['♦'].length,
+                    '♣': foundations['♣'].length
+                },
+                moves: moves,
+                win: win
+            };
+        }
 
-        init();
+        function sendGameState() {
+            if (!ws || ws.readyState !== WebSocket.OPEN || !isHost) return;
+            ws.send(JSON.stringify({
+                action: 'move',
+                game_id: gameId,
+                state: getGameState()
+            }));
+        }
+
+        function updateGameFromState(state) {
+            // Обновляем счётчики фондов и ходы (наблюдатель не может менять карты, просто видит прогресс)
+            // В реальном времени наблюдатель увидит карты на столе? Но так как мы не передаём всю колоду,
+            // наблюдатель может просто видеть статистику и факт победы.
+            // Для полноценного стрима нужно передавать все перемещения карт (сложнее). 
+            // Пока ограничимся такой синхронизацией – вы всегда можете расширить.
+            moves = state.moves;
+            for (let s of SUITS) {
+                foundations[s].length = state.foundations[s];
+            }
+            if (state.win) {
+                win = true;
+                document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
+            }
+            layoutCards();
+            drawAll();
+        }
+
+        // ============ WEBSOCKET ПОДКЛЮЧЕНИЕ ============
+        function connectWebSocket() {
+            if (!gameId) return;
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                if (isWatcher) {
+                    ws.send(JSON.stringify({
+                        action: 'join',
+                        game_id: gameId,
+                        player_id: 'observer_' + Math.random().toString(36).substr(2, 9)
+                    }));
+                    document.getElementById('spectatorBadge').innerHTML = 
+                        '<div style="background:rgba(212,175,55,0.1);padding:6px 16px;border-radius:20px;display:inline-block;border:1px solid rgba(212,175,55,0.2);color:#ebc25e;">👁 Наблюдаем за игрой</div>';
+                } else {
+                    ws.send(JSON.stringify({
+                        action: 'create',
+                        game_id: gameId,
+                        player_id: 'host_' + Math.random().toString(36).substr(2, 9)
+                    }));
+                    isHost = true;
+                }
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'state_update') {
+                    updateGameFromState(data.state);
+                } else if (data.type === 'spectator_update') {
+                    spectatorsCount = data.count;
+                    drawAll();
+                } else if (data.type === 'joined') {
+                    // получили начальное состояние
+                    if (data.state) updateGameFromState(data.state);
+                }
+            };
+            ws.onclose = () => {
+                // реконнект через 3 секунды
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function joinAsWatcher() {
+            const id = prompt('Введите ID игры (или откройте ссылку с параметром ?game=ID&watch=true):');
+            if (id) {
+                window.location.href = `?game=${id}&watch=true`;
+            }
+        }
+
+        function shareGame() {
+            if (gameId) {
+                navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!'));
+            } else {
+                alert('Сначала создайте игру через Discord командой /solitaire');
+            }
+        }
+
+        // ============ ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ============
+        function startApp() {
+            resize();
+            init();
+            
+            if (gameId) {
+                // Прячем кнопку "Смотреть", если уже в режиме просмотра
+                if (isWatcher) {
+                    document.getElementById('btnWatch').classList.add('hidden');
+                    document.getElementById('btnShare').classList.add('hidden');
+                }
+                connectWebSocket();
+            } else {
+                // Локальная игра без мультиплеера
+                document.getElementById('btnWatch').classList.add('hidden');
+            }
+        }
+
+        startApp();
     </script>
 </body>
 </html>
