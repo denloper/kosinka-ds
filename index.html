@@ -119,7 +119,9 @@
 
     <script>
         // ============ НАСТРОЙКИ ============
-        const WS_URL = 'ws://localhost:8765';   // ← замени на публичный wss:// при деплое
+        const WS_URL = 'ws://localhost:8765';   // замените на публичный wss:// при деплое
+        const CARD_W = 95, CARD_H = 120;        // размер 95×120
+        const CARD_OVERLAP = 30;                // перекрытие в столбцах
         const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
@@ -132,38 +134,32 @@
         let isHost = false;
         let spectatorsCount = 0;
 
-        // ============ ПЕРЕМЕННЫЕ ИГРЫ (размеры теперь динамические) ============
-        let CARD_W, CARD_H;            // будут вычисляться
-        let cardOverlap;              // перекрытие в столбцах
-        let backPattern;              // рубашка карты (canvas)
-
+        // ============ ПЕРЕМЕННЫЕ ИГРЫ ============
         let deck, stock, waste, foundations, columns;
         let isDragging = false, dragCards = [], dragFromCol = -1, dragFromWaste = false;
         let dragOffsetX, dragOffsetY, mouseX, mouseY;
         let hoverCol = -1, hoverSuit = null;
         let moves = 0, win = false;
 
-        // ============ ГЕНЕРАЦИЯ РУБАШКИ ============
-        function generateBackPattern() {
-            backPattern = document.createElement('canvas');
-            backPattern.width = CARD_W;
-            backPattern.height = CARD_H;
-            const bctx = backPattern.getContext('2d');
-            bctx.fillStyle = '#0f1e36';
-            bctx.fillRect(0, 0, CARD_W, CARD_H);
-            bctx.strokeStyle = '#ebc25e';
-            bctx.lineWidth = Math.max(1, CARD_W * 0.02);
-            bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
-            bctx.fillStyle = '#d4af37';
-            const spacing = Math.floor(CARD_W / 4.5);
-            const offsetX = (CARD_W % spacing) / 2;
-            const offsetY = (CARD_H % spacing) / 2;
-            for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
-                for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
-                    bctx.beginPath();
-                    bctx.arc(x, y, spacing * 0.15, 0, Math.PI*2);
-                    bctx.fill();
-                }
+        // Генерация рубашки карт (винтажная)
+        const backPattern = document.createElement('canvas');
+        backPattern.width = CARD_W;
+        backPattern.height = CARD_H;
+        const bctx = backPattern.getContext('2d');
+        bctx.fillStyle = '#0f1e36';
+        bctx.fillRect(0, 0, CARD_W, CARD_H);
+        bctx.strokeStyle = '#ebc25e';
+        bctx.lineWidth = 1.8;
+        bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+        bctx.fillStyle = '#d4af37';
+        const spacing = 22;
+        const offsetX = (CARD_W % spacing) / 2;
+        const offsetY = (CARD_H % spacing) / 2;
+        for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
+            for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
+                bctx.beginPath();
+                bctx.arc(x, y, 3.5, 0, Math.PI*2);
+                bctx.fill();
             }
         }
 
@@ -190,46 +186,41 @@
                 if (isDrag) {
                     ctx.globalAlpha = 0.95;
                     ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                    ctx.shadowBlur = 20;
+                    ctx.shadowBlur = 24;
                 }
                 
                 if (this.faceUp) {
-                    const fontSize = Math.floor(CARD_H * 0.22);
-                    const smallFont = Math.floor(CARD_H * 0.18);
-                    const cornerX = Math.floor(CARD_W * 0.06);
-                    const cornerY = Math.floor(CARD_H * 0.06);
-                    
                     // Основа
                     ctx.fillStyle = '#f2ebdc';
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
                     // Рамки
                     ctx.strokeStyle = '#3b2e26';
-                    ctx.lineWidth = Math.max(1, CARD_W * 0.015);
+                    ctx.lineWidth = 1.4;
                     ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2);
                     ctx.strokeStyle = '#5d4a3c';
-                    ctx.lineWidth = Math.max(0.5, CARD_W * 0.005);
-                    ctx.strokeRect(cx+4, cy+4, CARD_W-8, CARD_H-8);
+                    ctx.lineWidth = 0.6;
+                    ctx.strokeRect(cx+5, cy+5, CARD_W-10, CARD_H-10);
                     
                     // Текст ранга и масти (верхний левый)
                     ctx.fillStyle = this.color;
-                    ctx.font = `bold ${fontSize}px "Georgia", "Times New Roman", serif`;
-                    ctx.fillText(this.rank, cx + cornerX, cy + cornerY + fontSize);
-                    ctx.font = `${smallFont}px "Georgia", "Times New Roman", serif`;
-                    ctx.fillText(this.suit, cx + cornerX, cy + cornerY + fontSize + smallFont + 2);
+                    ctx.font = 'bold 26px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.rank, cx + 10, cy + 34);
+                    ctx.font = '20px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, cx + 10, cy + 58);
                     
                     // Перевёрнутые (нижний правый)
                     ctx.save();
-                    ctx.translate(cx + CARD_W - cornerX, cy + CARD_H - cornerY);
+                    ctx.translate(cx + CARD_W - 10, cy + CARD_H - 8);
                     ctx.rotate(Math.PI);
-                    ctx.font = `bold ${fontSize}px "Georgia", "Times New Roman", serif`;
+                    ctx.font = 'bold 26px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.rank, 0, 0);
-                    ctx.font = `${smallFont}px "Georgia", "Times New Roman", serif`;
-                    ctx.fillText(this.suit, 0, smallFont + 2);
+                    ctx.font = '20px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, 0, 24);
                     ctx.restore();
                     
                     // Центральный символ
-                    ctx.globalAlpha = 0.3;
-                    ctx.font = `${Math.floor(CARD_H * 0.55)}px "Georgia", "Times New Roman", serif`;
+                    ctx.globalAlpha = 0.35;
+                    ctx.font = '60px "Georgia", "Times New Roman", serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2);
@@ -239,11 +230,9 @@
                     // Медальон для фигурных карт
                     if (['J', 'Q', 'K'].includes(this.rank)) {
                         ctx.beginPath();
-                        const ellipseW = Math.floor(CARD_W * 0.25);
-                        const ellipseH = Math.floor(CARD_H * 0.3);
-                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, ellipseW, ellipseH, 0, 0, Math.PI*2);
+                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 24, 32, 0, 0, Math.PI*2);
                         ctx.strokeStyle = '#d4af37';
-                        ctx.lineWidth = Math.max(1.5, CARD_W * 0.02);
+                        ctx.lineWidth = 1.8;
                         ctx.stroke();
                         ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
                         ctx.fill();
@@ -260,37 +249,8 @@
             }
         }
 
-        // ============ ВЫЧИСЛЕНИЕ РАЗМЕРОВ ============
-        function calculateSizes() {
-            const marginX = 24;      // левый + правый отступ
-            const gapCols = 8;       // промежуток между столбцами
-            const marginTop = 10;    // верхний отступ для фондов
-            const areaTop = 140;     // Y начала столбцов (высота верхней зоны)
-            const marginBottom = 20; // отступ снизу
-            
-            // Ширина карты: 7 штук помещаются в canvas.width - marginX - 6*gapCols
-            CARD_W = Math.floor((canvas.width - marginX - 6 * gapCols) / 7);
-            // Высота карты: 13 карт с перекрытием cardOverlap (которое мы зададим как 0.3*CARD_H)
-            cardOverlap = Math.floor(0.3 * (canvas.height - areaTop - marginBottom) / 13); // временно
-            // Фактически cardOverlap зависит от CARD_H, решаем уравнение:
-            // CARD_H + 12 * cardOverlap <= canvas.height - areaTop - marginBottom
-            // возьмём cardOverlap = CARD_H * 0.28
-            // Тогда CARD_H + 12 * 0.28 * CARD_H <= высота_столбца
-            // CARD_H * (1 + 3.36) <= высота_столбца
-            // CARD_H = высота_столбца / 4.36
-            const colAreaHeight = canvas.height - areaTop - marginBottom;
-            CARD_H = Math.floor(colAreaHeight / 4.36);
-            cardOverlap = Math.floor(CARD_H * 0.28);
-            // Минимальные размеры, чтобы карты не исчезали
-            CARD_W = Math.max(65, CARD_W);
-            CARD_H = Math.max(90, CARD_H);
-            
-            generateBackPattern();
-        }
-
         // ============ ИНИЦИАЛИЗАЦИЯ ИГРЫ ============
         function init() {
-            calculateSizes();
             deck = [];
             stock = [];
             waste = [];
@@ -333,8 +293,8 @@
         function layoutCards() {
             const startX = 12, startY = 10;
             let fx = startX, fy = startY;
-            const colStartX = startX, colStartY = 140;
-            const colSpacing = CARD_W + 8;
+            const colStartX = startX, colStartY = 150;
+            const colSpacing = CARD_W + 9;
             
             // Фонды
             for (let s of SUITS) {
@@ -342,16 +302,16 @@
                     foundations[s][foundations[s].length-1].x = fx;
                     foundations[s][foundations[s].length-1].y = fy;
                 }
-                fx += CARD_W + 5;
+                fx += CARD_W + 6;
             }
             // Сток и отвал
-            let sx = startX + 4*(CARD_W+5) + 15;
+            let sx = startX + 4*(CARD_W+6) + 18;
             if (stock.length) {
                 stock[stock.length-1].x = sx;
                 stock[stock.length-1].y = startY;
             }
             if (waste.length) {
-                waste[waste.length-1].x = sx + CARD_W + 10;
+                waste[waste.length-1].x = sx + CARD_W + 12;
                 waste[waste.length-1].y = startY;
             }
             // Столбцы
@@ -360,7 +320,7 @@
                 let col = columns[i];
                 for (let j = 0; j < col.length; j++) {
                     col[j].x = cx;
-                    col[j].y = cy + j * cardOverlap;
+                    col[j].y = cy + j * CARD_OVERLAP;
                 }
                 cx += colSpacing;
             }
@@ -382,10 +342,10 @@
                     ctx.strokeRect(fx, fy, CARD_W, CARD_H);
                     ctx.setLineDash([]);
                 }
-                fx += CARD_W + 5;
+                fx += CARD_W + 6;
             }
             
-            let sx = 12 + 4*(CARD_W+5) + 15;
+            let sx = 12 + 4*(CARD_W+6) + 18;
             if (stock.length) stock[stock.length-1].draw();
             else {
                 ctx.strokeStyle = 'rgba(255,255,255,0.08)';
@@ -395,12 +355,12 @@
             }
             if (waste.length) waste[waste.length-1].draw();
             
-            let cx = 12, cy = 140;
-            const colSpacing = CARD_W + 8;
+            let cx = 12, cy = 150;
+            const colSpacing = CARD_W + 9;
             for (let i = 0; i < 7; i++) {
                 if (hoverCol === i && isDragging) {
                     ctx.fillStyle = 'rgba(235, 194, 94, 0.1)';
-                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + cardOverlap : cy;
+                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + CARD_OVERLAP : cy;
                     ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
                 for (let card of columns[i]) {
@@ -445,7 +405,7 @@
             const r = canvas.getBoundingClientRect();
             const mx = e.clientX - r.left, my = e.clientY - r.top;
             
-            let sx = 12 + 4*(CARD_W+5) + 15;
+            let sx = 12 + 4*(CARD_W+6) + 18;
             if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
                 if (stock.length) {
                     waste.push(stock.pop());
@@ -467,8 +427,8 @@
                 return;
             }
             
-            let cx = 12, cy = 140;
-            const colSpacing = CARD_W + 8;
+            let cx = 12, cy = 150;
+            const colSpacing = CARD_W + 9;
             for (let i = 0; i < 7; i++) {
                 for (let j = columns[i].length-1; j >= 0; j--) {
                     if (columns[i][j].faceUp && columns[i][j].contains(mx, my)) {
@@ -504,10 +464,10 @@
             for (let s of SUITS) {
                 if (mouseX >= fx && mouseX <= fx+CARD_W && mouseY >= fy && mouseY <= fy+CARD_H)
                     hoverSuit = s;
-                fx += CARD_W + 5;
+                fx += CARD_W + 6;
             }
-            let cx = 12, cy = 140;
-            const colSpacing = CARD_W + 8;
+            let cx = 12, cy = 150;
+            const colSpacing = CARD_W + 9;
             for (let i = 0; i < 7; i++) {
                 if (mouseX >= cx && mouseX <= cx+CARD_W && mouseY >= cy)
                     hoverCol = i;
@@ -574,13 +534,12 @@
         function resize() {
             canvas.width = Math.min(window.innerWidth - 40, 1120);
             canvas.height = Math.min(window.innerHeight - 220, 700);
-            calculateSizes();
             layoutCards();
             drawAll();
         }
         window.addEventListener('resize', resize);
 
-        // ============ ФУНКЦИИ ДЛЯ МУЛЬТИПЛЕЕРА ============
+        // ============ МУЛЬТИПЛЕЕР ============
         function getGameState() {
             return {
                 foundations: {
@@ -616,7 +575,7 @@
             drawAll();
         }
 
-        // ============ WEBSOCKET ПОДКЛЮЧЕНИЕ ============
+        // ============ WEBSOCKET ============
         function connectWebSocket() {
             if (!gameId) return;
             ws = new WebSocket(WS_URL);
@@ -669,7 +628,7 @@
             }
         }
 
-        // ============ ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ ============
+        // ============ СТАРТ ============
         function startApp() {
             resize();
             init();
