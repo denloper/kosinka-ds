@@ -204,10 +204,10 @@
         <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
         <div class="btn-row">
-            <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
+            <button class="btn-new" id="btnNewGame" onclick="newGame()">🔄 Новая игра</button>
             <button class="btn-spectate" id="btnWatch" onclick="joinAsWatcher()">👁 Смотреть игру</button>
             <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
-            <button class="btn-hint" onclick="showHint()">💡 Подсказка</button>
+            <button class="btn-hint" id="btnHint" onclick="showHint()">💡 Подсказка</button>
             <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
         </div>
     </div>
@@ -229,7 +229,7 @@
         const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-        // ============ ТЕМЫ ============
+        // ============ ТЕМЫ (полный набор) ============
         const themes = [
             {
                 name: 'Классика',
@@ -751,7 +751,11 @@
             sendGameState();
         }
 
-        function newGame() { init(); }
+        function newGame() {
+            if (isWatcher) return;
+            if (!deck) return;
+            init();
+        }
 
         function layoutCards() {
             const startX = 12, startY = 10;
@@ -798,6 +802,7 @@
 
         function showHint() {
             if (win || isWatcher) return;
+            if (!deck) return;
             clearHint();
             
             for (let i = 0; i < 7; i++) {
@@ -861,7 +866,7 @@
             const cvs = document.getElementById('canvas');
             const ctx = cvs.getContext('2d');
             const displayWidth = Math.min(window.innerWidth - 40, 1120);
-            const displayHeight = Math.min(window.innerHeight - 220, 700);
+            const displayHeight = Math.min(window.innerHeight - 250, 700);
             cvs.width = displayWidth * dpr;
             cvs.height = displayHeight * dpr;
             cvs.style.width = displayWidth + 'px';
@@ -1211,26 +1216,29 @@
             }
         }
 
+        let displayWidth = 1120;
+        let displayHeight = 700;
+
         function startApp() {
             loadTheme();
             generateBackPattern();
-            layoutCards();
-            drawAll();
+            init();
             
             if (gameId) {
                 if (isWatcher) {
                     document.getElementById('btnWatch').classList.add('hidden');
                     document.getElementById('btnShare').classList.add('hidden');
+                    document.getElementById('btnNewGame').classList.add('hidden');
+                    document.getElementById('btnHint').classList.add('hidden');
                 }
                 connectWebSocket();
             } else {
                 document.getElementById('btnWatch').classList.add('hidden');
             }
+            layoutCards();
+            drawAll();
         }
 
-        // Глобальные переменные для размеров канваса
-        let displayWidth = 1120;
-        let displayHeight = 700;
         startApp();
     </script>
 </body>
