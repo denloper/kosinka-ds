@@ -10,7 +10,11 @@
             justify-content: center; align-items: center; min-height: 100vh;
             margin: 0; font-family: Georgia, serif; flex-direction: column;
         }
-        canvas { background: #0a6e2e; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.7); }
+        canvas { 
+            background: #0a6e2e; border-radius: 12px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+            display: block; /* убирает лишние отступы */
+        }
         #status { margin-bottom: 10px; font-size: 18px; color: #d4af37; }
         button { margin: 5px; padding: 8px 16px; font-size: 16px; cursor: pointer; }
         .controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
@@ -26,7 +30,7 @@
     </div>
 
     <script>
-        const WS_URL = 'ws://localhost:8765';  // ← замените на wss://... при деплое
+        const WS_URL = 'ws://localhost:8765';  // замените на wss://... при деплое
         const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
         const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -86,8 +90,12 @@
 
         // ===== Отрисовка =====
         function resize() {
+            // Логические размеры
             canvas.width = Math.min(1100, window.innerWidth - 20);
             canvas.height = Math.min(700, window.innerHeight - 100);
+            // Принудительно синхронизируем CSS-размеры, чтобы координаты мыши совпадали
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
             draw();
         }
         window.addEventListener('resize', resize);
@@ -122,10 +130,8 @@
                 }
                 for (let i = 0; i < col.length; i++) {
                     const card = col[i];
-                    // Сохраняем реальные координаты для дальнейшего перетаскивания
                     card.x = cx;
                     card.y = cy + i * CARD_OVERLAP;
-                    // Не рисуем карты, которые сейчас перетаскиваются
                     if (!dragCards.includes(card)) {
                         drawCard(card, card.x, card.y);
                     }
@@ -133,7 +139,7 @@
                 cx += CARD_W + 9;
             }
 
-            // Перетаскиваемые карты поверх
+            // Перетаскиваемые карты
             if (drag && dragCards.length) {
                 for (let i = 0; i < dragCards.length; i++) {
                     const card = dragCards[i];
@@ -141,7 +147,6 @@
                 }
             }
 
-            // Статистика
             ctx.font = '14px Georgia'; ctx.fillStyle = '#ddd';
             ctx.fillText(`Ходов: ${gameState.moves}`, canvas.width - 100, canvas.height - 10);
         }
@@ -177,11 +182,12 @@
                 }
         }
 
-        // ===== Мышь =====
+        // ===== Управление мышью =====
         canvas.onmousedown = (e) => {
             if (!gameState || isWatcher) return;
             const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
             let stockX = 20 + 4*(CARD_W+6) + 20;
             // Клик по стоку
             if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
@@ -193,7 +199,7 @@
                 let wx = stockX+CARD_W+12, wy = 10;
                 if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
                     const card = gameState.waste[0];
-                    card.x = wx; card.y = wy; // сохраняем координаты
+                    card.x = wx; card.y = wy;
                     startDrag([card], -1, true, mx, my);
                     return;
                 }
@@ -208,7 +214,6 @@
                     const cardY = cy + j*CARD_OVERLAP;
                     if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
                         const group = col.slice(j);
-                        // убедимся, что координаты правильные
                         if (group.length) {
                             group[0].x = cx;
                             group[0].y = cardY;
@@ -223,10 +228,8 @@
 
         function startDrag(cards, col, waste, mx, my) {
             if (!cards.length) return;
-            const firstCard = cards[0];
-            // Используем сохранённые координаты карты
-            const cardX = firstCard.x || 0;
-            const cardY = firstCard.y || 0;
+            const cardX = cards[0].x || 0;
+            const cardY = cards[0].y || 0;
             drag = { cards, col, waste, offsetX: mx - cardX, offsetY: my - cardY };
             dragCards = cards; fromCol = col; fromWaste = waste;
             mouseX = mx; mouseY = my;
@@ -244,7 +247,8 @@
         canvas.onmouseup = (e) => {
             if (!drag) return;
             const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
             let targetType = null, targetIndex = null, targetSuit = null;
             // Фонды
             let fx = 20, fy = 10;
@@ -278,7 +282,8 @@
         canvas.ondblclick = (e) => {
             if (!gameState || isWatcher) return;
             const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
             let cx = 20, cy = 150;
             for (let i = 0; i < gameState.columns.length; i++) {
                 const col = gameState.columns[i];
@@ -299,7 +304,7 @@
             }
         };
 
-        connect(); // Запуск
+        connect();
     </script>
 </body>
 </html>
