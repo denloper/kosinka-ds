@@ -114,9 +114,9 @@
         .btn-spectate { color: #b0bce6; }
         .btn-share { color: #9aaec2; }
         .btn-theme { color: #c0a0b0; }
+        .btn-hint { color: #f0d060; }
         .hidden { display: none !important; }
 
-        /* Модальное окно */
         .modal { 
             display: none; 
             position: fixed; 
@@ -207,6 +207,7 @@
             <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
             <button class="btn-spectate" id="btnWatch" onclick="joinAsWatcher()">👁 Смотреть игру</button>
             <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
+            <button class="btn-hint" onclick="showHint()">💡 Подсказка</button>
             <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
         </div>
     </div>
@@ -229,7 +230,7 @@
         const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-        // ============ ТЕМЫ ============
+        // ============ ТЕМЫ (полный набор) ============
         const themes = [
             {
                 name: 'Классика',
@@ -248,45 +249,265 @@
                     '--win-color': '#ebc25e',
                     '--modal-bg': '#151e2e',
                     '--modal-border': 'rgba(212, 175, 55, 0.2)'
+                },
+                card: {
+                    faceBg: '#f2ebdc',
+                    frameOuter: '#3b2e26',
+                    frameInner: '#5d4a3c',
+                    redText: '#8b302a',
+                    blackText: '#382e26',
+                    backColor: '#0f1e36',
+                    backBorder: '#ebc25e',
+                    backPattern: '#d4af37'
                 }
             },
-            // Остальные темы без изменений (в реальном файле они полные)
+            {
+                name: 'Изумруд',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 30% 70%, #0d4d3c 0%, #051a14 100%)',
+                    '--game-bg': 'rgba(14, 40, 35, 0.5)',
+                    '--game-border': 'rgba(0, 200, 150, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 30, 20, 0.8)',
+                    '--canvas-bg': '#0a2a22',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 50, 30, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 45, 0.6)',
+                    '--button-border': 'rgba(0, 200, 150, 0.3)',
+                    '--button-hover-bg': 'rgba(0, 200, 150, 0.15)',
+                    '--title-color': '#7ed4b5',
+                    '--info-color': '#8fbcac',
+                    '--win-color': '#7ed4b5',
+                    '--modal-bg': '#0e2822',
+                    '--modal-border': 'rgba(0, 200, 150, 0.25)'
+                },
+                card: {
+                    faceBg: '#e6f0e6',
+                    frameOuter: '#1f4a2c',
+                    frameInner: '#2d5a38',
+                    redText: '#a04040',
+                    blackText: '#1e3a2a',
+                    backColor: '#0a2a1a',
+                    backBorder: '#5ab88c',
+                    backPattern: '#7ed4b5'
+                }
+            },
+            {
+                name: 'Закат',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)',
+                    '--game-bg': 'rgba(50, 15, 15, 0.5)',
+                    '--game-border': 'rgba(255, 120, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(80, 20, 10, 0.7)',
+                    '--canvas-bg': '#3b1818',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 10, 0, 0.4)',
+                    '--button-bg': 'rgba(80, 30, 30, 0.6)',
+                    '--button-border': 'rgba(255, 120, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 120, 80, 0.15)',
+                    '--title-color': '#f4a261',
+                    '--info-color': '#e0a88a',
+                    '--win-color': '#f4a261',
+                    '--modal-bg': '#3b1e1e',
+                    '--modal-border': 'rgba(255, 120, 80, 0.25)'
+                },
+                card: {
+                    faceBg: '#f5e6d3',
+                    frameOuter: '#7b3a2a',
+                    frameInner: '#a0523e',
+                    redText: '#b33a2a',
+                    blackText: '#4a2a1a',
+                    backColor: '#5e1e1e',
+                    backBorder: '#f4a261',
+                    backPattern: '#e76f51'
+                }
+            },
+            {
+                name: 'Лаванда',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 40% 60%, #4a2d6b 0%, #1a0a2e 100%)',
+                    '--game-bg': 'rgba(30, 15, 45, 0.5)',
+                    '--game-border': 'rgba(180, 130, 255, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(40, 10, 60, 0.7)',
+                    '--canvas-bg': '#221833',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(50, 0, 80, 0.4)',
+                    '--button-bg': 'rgba(60, 35, 85, 0.6)',
+                    '--button-border': 'rgba(180, 130, 255, 0.3)',
+                    '--button-hover-bg': 'rgba(180, 130, 255, 0.15)',
+                    '--title-color': '#c9a0ff',
+                    '--info-color': '#b8a0d0',
+                    '--win-color': '#c9a0ff',
+                    '--modal-bg': '#1e1630',
+                    '--modal-border': 'rgba(180, 130, 255, 0.25)'
+                },
+                card: {
+                    faceBg: '#f0e6f6',
+                    frameOuter: '#4a2d6b',
+                    frameInner: '#6b4a8a',
+                    redText: '#8b3050',
+                    blackText: '#2a1a3a',
+                    backColor: '#2e1a4a',
+                    backBorder: '#c9a0ff',
+                    backPattern: '#b38fd9'
+                }
+            },
+            {
+                name: 'Океан',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)',
+                    '--game-bg': 'rgba(10, 30, 40, 0.5)',
+                    '--game-border': 'rgba(70, 180, 210, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 40, 60, 0.7)',
+                    '--canvas-bg': '#0e2933',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 80, 120, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 80, 0.6)',
+                    '--button-border': 'rgba(70, 180, 210, 0.3)',
+                    '--button-hover-bg': 'rgba(70, 180, 210, 0.15)',
+                    '--title-color': '#7ec8e3',
+                    '--info-color': '#8fbcc8',
+                    '--win-color': '#7ec8e3',
+                    '--modal-bg': '#0c2028',
+                    '--modal-border': 'rgba(70, 180, 210, 0.25)'
+                },
+                card: {
+                    faceBg: '#e0f0f5',
+                    frameOuter: '#1a4050',
+                    frameInner: '#2a6070',
+                    redText: '#a04040',
+                    blackText: '#1a3030',
+                    backColor: '#0a2030',
+                    backBorder: '#7ec8e3',
+                    backPattern: '#46b8d8'
+                }
+            },
+            {
+                name: 'Золото',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)',
+                    '--game-bg': 'rgba(35, 25, 10, 0.5)',
+                    '--game-border': 'rgba(255, 210, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(60, 40, 5, 0.7)',
+                    '--canvas-bg': '#2e2518',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 60, 0, 0.4)',
+                    '--button-bg': 'rgba(70, 55, 30, 0.6)',
+                    '--button-border': 'rgba(255, 210, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 210, 80, 0.15)',
+                    '--title-color': '#f4d03f',
+                    '--info-color': '#c9b86c',
+                    '--win-color': '#f4d03f',
+                    '--modal-bg': '#2a1f10',
+                    '--modal-border': 'rgba(255, 210, 80, 0.25)'
+                },
+                card: {
+                    faceBg: '#fdf5e6',
+                    frameOuter: '#8a6d3b',
+                    frameInner: '#b8965c',
+                    redText: '#8b3020',
+                    blackText: '#3e2e1a',
+                    backColor: '#3e2a0a',
+                    backBorder: '#f4d03f',
+                    backPattern: '#d4a017'
+                }
+            },
+            {
+                name: 'Вишня',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 70% 40%, #8b2a3a 0%, #2d0a10 100%)',
+                    '--game-bg': 'rgba(40, 15, 20, 0.5)',
+                    '--game-border': 'rgba(255, 90, 120, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(70, 10, 20, 0.7)',
+                    '--canvas-bg': '#2b181e',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(90, 0, 20, 0.4)',
+                    '--button-bg': 'rgba(70, 30, 40, 0.6)',
+                    '--button-border': 'rgba(255, 90, 120, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 90, 120, 0.15)',
+                    '--title-color': '#ff8fa0',
+                    '--info-color': '#d89aa0',
+                    '--win-color': '#ff8fa0',
+                    '--modal-bg': '#2b1a20',
+                    '--modal-border': 'rgba(255, 90, 120, 0.25)'
+                },
+                card: {
+                    faceBg: '#fce4ec',
+                    frameOuter: '#8b2a3a',
+                    frameInner: '#b04550',
+                    redText: '#8b2a3a',
+                    blackText: '#3a1a20',
+                    backColor: '#5e1a28',
+                    backBorder: '#ff8fa0',
+                    backPattern: '#e5737c'
+                }
+            },
+            {
+                name: 'Полночь',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 10% 20%, #0a0f1a 0%, #020408 100%)',
+                    '--game-bg': 'rgba(10, 14, 22, 0.5)',
+                    '--game-border': 'rgba(100, 120, 180, 0.15)',
+                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.9)',
+                    '--canvas-bg': '#090d16',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.9), 0 8px 32px rgba(0,0,0,0.8)',
+                    '--button-bg': 'rgba(20, 28, 45, 0.6)',
+                    '--button-border': 'rgba(100, 120, 180, 0.3)',
+                    '--button-hover-bg': 'rgba(100, 120, 180, 0.15)',
+                    '--title-color': '#a0b4e0',
+                    '--info-color': '#7a8aaa',
+                    '--win-color': '#a0b4e0',
+                    '--modal-bg': '#0d1220',
+                    '--modal-border': 'rgba(100, 120, 180, 0.25)'
+                },
+                card: {
+                    faceBg: '#d0d8e8',
+                    frameOuter: '#1a2a40',
+                    frameInner: '#3a4a60',
+                    redText: '#804060',
+                    blackText: '#101828',
+                    backColor: '#0a1020',
+                    backBorder: '#a0b4e0',
+                    backPattern: '#7088b0'
+                }
+            }
         ];
 
-        function applyTheme(themeVars) {
+        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ КАРТ ============
+        let cardColors = { ...themes[0].card };
+
+        // ============ ФУНКЦИИ ТЕМ ============
+        function applyTheme(theme) {
             const root = document.documentElement;
-            Object.entries(themeVars).forEach(([prop, value]) => {
+            Object.entries(theme.vars).forEach(([prop, value]) => {
                 root.style.setProperty(prop, value);
             });
+            cardColors = { ...theme.card };
+            generateBackPattern();
+            drawAll();
         }
 
         function loadTheme() {
             const saved = localStorage.getItem('solitaire_theme');
             if (saved) {
                 try {
-                    const theme = JSON.parse(saved);
-                    applyTheme(theme);
-                    return;
+                    const index = parseInt(saved);
+                    if (index >= 0 && index < themes.length) {
+                        applyTheme(themes[index]);
+                        return;
+                    }
                 } catch(e) {}
             }
-            applyTheme(themes[0].vars);
+            applyTheme(themes[0]);
         }
 
-        function saveTheme(themeVars) {
-            localStorage.setItem('solitaire_theme', JSON.stringify(themeVars));
+        function saveThemeIndex(index) {
+            localStorage.setItem('solitaire_theme', index);
         }
 
         function resetTheme() {
-            const defaultVars = themes[0].vars;
-            applyTheme(defaultVars);
-            saveTheme(defaultVars);
+            applyTheme(themes[0]);
+            saveThemeIndex(0);
             closeThemePicker();
         }
 
         function showThemePicker() {
             const grid = document.getElementById('themeGrid');
             grid.innerHTML = '';
-            themes.forEach(theme => {
+            themes.forEach((theme, idx) => {
                 const card = document.createElement('div');
                 card.className = 'theme-card';
                 const preview = document.createElement('div');
@@ -298,8 +519,8 @@
                 card.appendChild(preview);
                 card.appendChild(label);
                 card.onclick = () => {
-                    applyTheme(theme.vars);
-                    saveTheme(theme.vars);
+                    applyTheme(theme);
+                    saveThemeIndex(idx);
                     closeThemePicker();
                 };
                 grid.appendChild(card);
@@ -364,25 +585,33 @@
         let hoverCol = -1, hoverSuit = null;
         let moves = 0, win = false;
 
+        let hintCards = [];
+        let hintTargetCol = -1;
+        let hintTargetSuit = null;
+        let hintTimeout = null;
+
         // Рубашка
-        const backPattern = document.createElement('canvas');
-        backPattern.width = CARD_W;
-        backPattern.height = CARD_H;
-        const bctx = backPattern.getContext('2d');
-        bctx.fillStyle = '#0f1e36';
-        bctx.fillRect(0, 0, CARD_W, CARD_H);
-        bctx.strokeStyle = '#ebc25e';
-        bctx.lineWidth = 1.8;
-        bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
-        bctx.fillStyle = '#d4af37';
-        const spacing = 22;
-        const offsetX = (CARD_W % spacing) / 2;
-        const offsetY = (CARD_H % spacing) / 2;
-        for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
-            for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
-                bctx.beginPath();
-                bctx.arc(x, y, 3.5, 0, Math.PI*2);
-                bctx.fill();
+        let backPattern = document.createElement('canvas');
+
+        function generateBackPattern() {
+            backPattern.width = CARD_W;
+            backPattern.height = CARD_H;
+            const bctx = backPattern.getContext('2d');
+            bctx.fillStyle = cardColors.backColor;
+            bctx.fillRect(0, 0, CARD_W, CARD_H);
+            bctx.strokeStyle = cardColors.backBorder;
+            bctx.lineWidth = 1.8;
+            bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+            bctx.fillStyle = cardColors.backPattern;
+            const spacing = 22;
+            const offsetX = (CARD_W % spacing) / 2;
+            const offsetY = (CARD_H % spacing) / 2;
+            for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
+                for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
+                    bctx.beginPath();
+                    bctx.arc(x, y, 3.5, 0, Math.PI*2);
+                    bctx.fill();
+                }
             }
         }
 
@@ -395,7 +624,7 @@
                 this.y = 0;
             }
             get color() {
-                return (this.suit === '♥' || this.suit === '♦') ? '#8b302a' : '#382e26';
+                return (this.suit === '♥' || this.suit === '♦') ? cardColors.redText : cardColors.blackText;
             }
             get value() { return RANKS.indexOf(this.rank); }
             
@@ -422,23 +651,21 @@
                 }
                 
                 if (this.faceUp) {
-                    ctx.fillStyle = '#f2ebdc';
+                    ctx.fillStyle = cardColors.faceBg;
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#3b2e26';
+                    ctx.strokeStyle = cardColors.frameOuter;
                     ctx.lineWidth = 1.4;
                     ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2);
-                    ctx.strokeStyle = '#5d4a3c';
+                    ctx.strokeStyle = cardColors.frameInner;
                     ctx.lineWidth = 0.6;
                     ctx.strokeRect(cx+5, cy+5, CARD_W-10, CARD_H-10);
                     
                     ctx.fillStyle = this.color;
-                    // Верхний левый угол – отступ 12px
                     ctx.font = 'bold 18px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.rank, cx + 12, cy + 22);
                     ctx.font = '14px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.suit, cx + 12, cy + 38);
                     
-                    // Перевёрнутые в нижнем правом углу – отступ 18px
                     ctx.save();
                     ctx.translate(cx + CARD_W - 18, cy + CARD_H - 18);
                     ctx.rotate(Math.PI);
@@ -448,7 +675,6 @@
                     ctx.fillText(this.suit, 0, 17);
                     ctx.restore();
                     
-                    // Центральный символ
                     ctx.globalAlpha = 0.35;
                     ctx.font = '48px "Georgia", "Times New Roman", serif';
                     ctx.textAlign = 'center';
@@ -460,10 +686,10 @@
                     if (['J', 'Q', 'K'].includes(this.rank)) {
                         ctx.beginPath();
                         ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 22, 30, 0, 0, Math.PI*2);
-                        ctx.strokeStyle = '#d4af37';
+                        ctx.strokeStyle = cardColors.backBorder;
                         ctx.lineWidth = 1.6;
                         ctx.stroke();
-                        ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
+                        ctx.fillStyle = cardColors.backPattern.replace(')', ', 0.1)').replace('rgba', 'rgba');
                         ctx.fill();
                     }
                 } else {
@@ -501,6 +727,7 @@
             moves = 0;
             win = false;
             document.getElementById('winMessage').innerHTML = '';
+            clearHint();
             
             for (let s of SUITS) {
                 for (let r of RANKS) {
@@ -568,8 +795,8 @@
                 if (foundations[s].length) {
                     foundations[s][foundations[s].length-1].draw();
                 } else {
-                    ctx.strokeStyle = hoverSuit === s ? '#ebc25e' : 'rgba(255,255,255,0.08)';
-                    ctx.lineWidth = hoverSuit === s ? 2 : 1;
+                    ctx.strokeStyle = (hintTargetSuit === s) ? '#ffd700' : (hoverSuit === s ? '#ebc25e' : 'rgba(255,255,255,0.08)');
+                    ctx.lineWidth = (hintTargetSuit === s) ? 3 : (hoverSuit === s ? 2 : 1);
                     ctx.setLineDash([6,6]);
                     ctx.strokeRect(fx, fy, CARD_W, CARD_H);
                     ctx.setLineDash([]);
@@ -597,9 +824,23 @@
                     let lastY = columns[i].length ? columns[i][columns[i].length-1].y + CARD_OVERLAP : cy;
                     ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
+                if (hintTargetCol === i && !isDragging) {
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + CARD_OVERLAP : cy;
+                    ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
+                }
                 for (let card of columns[i]) {
                     if (!dragCards.includes(card)) {
                         card.draw();
+                        if (hintCards.includes(card) && !isDragging) {
+                            ctx.save();
+                            ctx.strokeStyle = '#ffd700';
+                            ctx.lineWidth = 3;
+                            ctx.shadowColor = '#ffd700';
+                            ctx.shadowBlur = 10;
+                            ctx.strokeRect(card.x-1, card.y-1, CARD_W+2, CARD_H+2);
+                            ctx.restore();
+                        }
                     }
                 }
                 cx += colSpacing;
@@ -647,9 +888,96 @@
             }
         }
 
+        function clearHint() {
+            hintCards = [];
+            hintTargetCol = -1;
+            hintTargetSuit = null;
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+        }
+
+        function showHint() {
+            if (win || isWatcher) return;
+            clearHint();
+            
+            // авто на фундамент из столбцов
+            for (let i = 0; i < 7; i++) {
+                if (columns[i].length > 0) {
+                    const card = columns[i][columns[i].length-1];
+                    if (canPlaceOnFoundation(card)) {
+                        hintCards = [card];
+                        hintTargetSuit = card.suit;
+                        drawAll();
+                        hintTimeout = setTimeout(() => {
+                            clearHint();
+                            drawAll();
+                        }, 2500);
+                        return;
+                    }
+                }
+            }
+            if (waste.length > 0) {
+                const card = waste[waste.length-1];
+                if (canPlaceOnFoundation(card)) {
+                    hintCards = [card];
+                    hintTargetSuit = card.suit;
+                    drawAll();
+                    hintTimeout = setTimeout(() => {
+                        clearHint();
+                        drawAll();
+                    }, 2500);
+                    return;
+                }
+            }
+            
+            // отвал -> столбец
+            if (waste.length > 0) {
+                const card = waste[waste.length-1];
+                for (let i = 0; i < 7; i++) {
+                    if (canPlaceOnColumn(card, columns[i])) {
+                        hintCards = [card];
+                        hintTargetCol = i;
+                        drawAll();
+                        hintTimeout = setTimeout(() => {
+                            clearHint();
+                            drawAll();
+                        }, 2500);
+                        return;
+                    }
+                }
+            }
+            // столбец -> столбец
+            for (let i = 0; i < 7; i++) {
+                if (columns[i].length === 0) continue;
+                for (let j = columns[i].length-1; j >= 0; j--) {
+                    if (!columns[i][j].faceUp) break;
+                    const group = columns[i].slice(j);
+                    if (isValidGroup(group)) {
+                        const movingCard = group[0];
+                        for (let k = 0; k < 7; k++) {
+                            if (k === i) continue;
+                            if (canPlaceOnColumn(movingCard, columns[k])) {
+                                hintCards = group;
+                                hintTargetCol = k;
+                                drawAll();
+                                hintTimeout = setTimeout(() => {
+                                    clearHint();
+                                    drawAll();
+                                }, 2500);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         canvas.onmousedown = (e) => {
             if (win) { init(); return; }
             if (isWatcher) return;
+            clearHint();
             const r = canvas.getBoundingClientRect();
             const mx = e.clientX - r.left, my = e.clientY - r.top;
             
@@ -769,6 +1097,7 @@
 
         canvas.ondblclick = (e) => {
             if (win || isWatcher) return;
+            clearHint();
             const r = canvas.getBoundingClientRect();
             const mx = e.clientX - r.left, my = e.clientY - r.top;
             for (let i = 0; i < 7; i++) {
