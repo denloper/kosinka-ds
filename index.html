@@ -2,1444 +2,236 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🃏 Пасьянс Косынка | Discord Activity</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пасьянс (Python Backend)</title>
     <style>
-        :root {
-            --body-bg: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
-            --game-bg: rgba(18, 25, 42, 0.4);
-            --game-border: rgba(212, 175, 55, 0.15);
-            --game-shadow: 0 20px 60px rgba(0,0,0,0.7);
-            --canvas-bg: #111c2f;
-            --canvas-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6);
-            --button-bg: rgba(30, 45, 70, 0.6);
-            --button-border: rgba(212, 175, 55, 0.3);
-            --button-hover-bg: rgba(212, 175, 55, 0.15);
-            --title-color: #ebc25e;
-            --info-color: #8d98b0;
-            --win-color: #ebc25e;
-            --modal-bg: #151e2e;
-            --modal-border: rgba(212, 175, 55, 0.2);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background: var(--body-bg);
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh;
-            font-family: 'Georgia', 'Times New Roman', serif; 
-            color: #e0e0e0; 
-            user-select: none;
-            transition: background 0.6s ease;
-        }
-        #game { 
-            text-align: center; 
-            background: var(--game-bg);
-            backdrop-filter: blur(8px);
-            padding: 25px 30px;
-            border-radius: 24px; 
-            border: 1px solid var(--game-border);
-            box-shadow: var(--game-shadow);
-            width: 95vw; 
-            max-width: 1120px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: background 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
-        }
-        h1 { 
-            margin-bottom: 12px; 
-            font-size: 32px;
-            letter-spacing: 2px;
-            color: var(--title-color);
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-            transition: color 0.6s ease;
-        }
-        #spectatorBadge { margin-bottom: 10px; font-size: 14px; min-height: 20px; }
-        canvas { 
-            border-radius: 16px; 
-            background: var(--canvas-bg);
-            cursor: grab; 
-            box-shadow: var(--canvas-shadow);
-            border: 1px solid rgba(212, 175, 55, 0.1);
-            display: block;
-        }
-        canvas:active { cursor: grabbing; }
-        .info { 
-            margin-top: 14px; 
-            font-size: 14px; 
-            color: var(--info-color);
-            letter-spacing: 0.5px;
-            transition: color 0.6s ease;
-        }
-        .win { 
-            color: var(--win-color);
-            font-size: 26px; 
-            font-weight: bold; 
-            margin-top: 12px; 
-            animation: pulse 1.5s infinite; 
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-        }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        .btn-row { 
-            margin-top: 15px; 
-            display: flex; 
-            gap: 12px; 
-            justify-content: center; 
-            flex-wrap: wrap; 
-        }
-        button { 
-            padding: 14px 32px; 
-            color: #e0e0e0; 
-            background: var(--button-bg);
-            border: 1px solid var(--button-border);
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-size: 15px; 
-            font-weight: bold;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            transition: all 0.3s ease; 
-            backdrop-filter: blur(4px);
-            letter-spacing: 1px;
-        }
-        button:hover { 
-            transform: translateY(-3px); 
-            background: var(--button-hover-bg);
-            border-color: var(--title-color);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15); 
-        }
-        .btn-new { color: #e6c86a; }
-        .btn-spectate { color: #b0bce6; }
-        .btn-share { color: #9aaec2; }
-        .btn-theme { color: #c0a0b0; }
-        .btn-hint { color: #f0d060; }
-        .btn-undo { color: #a0c0f0; }
-        .hidden { display: none !important; }
-
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 100; 
-        }
-        .modal.show { display: flex; }
-        .modal-content { 
-            background: var(--modal-bg);
-            border: 1px solid var(--modal-border);
-            border-radius: 20px; 
-            padding: 25px; 
-            max-width: 480px; 
-            width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            transition: background 0.6s ease, border-color 0.6s ease;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .modal h3 { margin-bottom: 15px; color: var(--title-color); font-size: 20px; }
-        .theme-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 12px; 
-            margin-bottom: 15px;
-        }
-        .theme-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 14px;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            background: rgba(255,255,255,0.02);
-        }
-        .theme-card:hover {
-            border-color: var(--title-color);
-            background: rgba(255,255,255,0.05);
-        }
-        .theme-preview {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .theme-label {
-            font-size: 11px;
-            color: var(--info-color);
-            text-align: center;
-        }
-        .close-btn { 
-            margin-top: 10px; 
-            padding: 12px 24px; 
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 10px; 
-            color: #b0bce6; 
-            cursor: pointer; 
-            font-size: 15px; 
-            font-family: 'Georgia', 'Times New Roman', serif; 
-            transition: 0.3s; 
-        }
-        .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
-        .reset-btn {
-            background: transparent;
-            border: 1px dashed rgba(255,255,255,0.3);
-            margin-top: 8px;
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            color: #b0bce6;
-            cursor: pointer;
-        }
-        #gameList {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        .game-item {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 10px 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .game-item:hover {
-            background: rgba(255,255,255,0.1);
-        }
-        .game-id {
-            font-family: monospace;
-            color: var(--title-color);
-            font-weight: bold;
-        }
-        #manualJoin {
-            margin-top: 8px;
-            display: flex;
-            gap: 8px;
-        }
-        #manualJoin input {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.3);
-            color: white;
-            font-size: 14px;
-        }
+        body { background: #1a1e2b; color: #ccc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: Georgia, serif; }
+        canvas { background: #0a6e2e; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.7); }
     </style>
 </head>
 <body>
-    <div id="game">
-        <h1>🕯 Пасьянс Косынка</h1>
-        <div id="spectatorBadge"></div>
-        <canvas id="canvas"></canvas>
-        <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
-        <div id="winMessage"></div>
-        <div class="btn-row">
-            <button class="btn-new" id="btnNewGame" onclick="newGame()">🔄 Новая игра</button>
-            <button class="btn-spectate" id="btnWatch" onclick="openWatchModal()">👁 Смотреть игру</button>
-            <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
-            <button class="btn-hint" id="btnHint" onclick="showHint()">💡 Подсказка</button>
-            <button class="btn-undo" id="btnUndo" onclick="undoMove()">↩ Отмена</button>
-            <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
-        </div>
-    </div>
-
-    <div class="modal" id="themeModal">
-        <div class="modal-content">
-            <h3>🎨 Выберите тему</h3>
-            <div class="theme-grid" id="themeGrid"></div>
-            <button class="reset-btn" onclick="resetTheme()">↩ Стандартная тема</button>
-            <button class="close-btn" onclick="closeThemePicker()">✕ Закрыть</button>
-        </div>
-    </div>
-
-    <div class="modal" id="watchModal">
-        <div class="modal-content">
-            <h3>👁 Выберите игру для наблюдения</h3>
-            <div id="gameList">Поиск активных игр...</div>
-            <div id="manualJoin">
-                <input type="text" id="manualGameId" placeholder="Введите ID игры">
-                <button onclick="joinManualGame()">▶ Смотреть</button>
-            </div>
-            <button class="close-btn" onclick="closeWatchModal()">✕ Закрыть</button>
-        </div>
-    </div>
-
+    <canvas id="c"></canvas>
     <script>
-        // ============ НАСТРОЙКИ ============
-        const WS_URL = 'ws://localhost:8765';   // ← замените на ваш публичный WebSocket сервер при деплое
-        const CARD_W = 95, CARD_H = 120;
-        const CARD_OVERLAP = 30;
-        const SUITS = ['♠', '♥', '♦', '♣'];
+        const WS_URL = 'ws://localhost:8765';
+        const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
+        const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+        let gameState = null, gameId = null, ws = null, isHost = false;
 
-        // ============ ТЕМЫ (полный набор) ============
-        const themes = [
-            {
-                name: 'Классика',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)',
-                    '--game-bg': 'rgba(18, 25, 42, 0.4)',
-                    '--game-border': 'rgba(212, 175, 55, 0.15)',
-                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.7)',
-                    '--canvas-bg': '#111c2f',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6)',
-                    '--button-bg': 'rgba(30, 45, 70, 0.6)',
-                    '--button-border': 'rgba(212, 175, 55, 0.3)',
-                    '--button-hover-bg': 'rgba(212, 175, 55, 0.15)',
-                    '--title-color': '#ebc25e',
-                    '--info-color': '#8d98b0',
-                    '--win-color': '#ebc25e',
-                    '--modal-bg': '#151e2e',
-                    '--modal-border': 'rgba(212, 175, 55, 0.2)'
-                },
-                card: {
-                    faceBg: '#f2ebdc',
-                    frameOuter: '#3b2e26',
-                    frameInner: '#5d4a3c',
-                    redText: '#8b302a',
-                    blackText: '#382e26',
-                    backColor: '#0f1e36',
-                    backBorder: '#ebc25e',
-                    backPattern: '#d4af37'
-                }
-            },
-            {
-                name: 'Изумруд',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 30% 70%, #0d4d3c 0%, #051a14 100%)',
-                    '--game-bg': 'rgba(14, 40, 35, 0.5)',
-                    '--game-border': 'rgba(0, 200, 150, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(0, 30, 20, 0.8)',
-                    '--canvas-bg': '#0a2a22',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 50, 30, 0.4)',
-                    '--button-bg': 'rgba(20, 60, 45, 0.6)',
-                    '--button-border': 'rgba(0, 200, 150, 0.3)',
-                    '--button-hover-bg': 'rgba(0, 200, 150, 0.15)',
-                    '--title-color': '#7ed4b5',
-                    '--info-color': '#8fbcac',
-                    '--win-color': '#7ed4b5',
-                    '--modal-bg': '#0e2822',
-                    '--modal-border': 'rgba(0, 200, 150, 0.25)'
-                },
-                card: {
-                    faceBg: '#e6f0e6',
-                    frameOuter: '#1f4a2c',
-                    frameInner: '#2d5a38',
-                    redText: '#a04040',
-                    blackText: '#1e3a2a',
-                    backColor: '#0a2a1a',
-                    backBorder: '#5ab88c',
-                    backPattern: '#7ed4b5'
-                }
-            },
-            {
-                name: 'Закат',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)',
-                    '--game-bg': 'rgba(50, 15, 15, 0.5)',
-                    '--game-border': 'rgba(255, 120, 80, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(80, 20, 10, 0.7)',
-                    '--canvas-bg': '#3b1818',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 10, 0, 0.4)',
-                    '--button-bg': 'rgba(80, 30, 30, 0.6)',
-                    '--button-border': 'rgba(255, 120, 80, 0.3)',
-                    '--button-hover-bg': 'rgba(255, 120, 80, 0.15)',
-                    '--title-color': '#f4a261',
-                    '--info-color': '#e0a88a',
-                    '--win-color': '#f4a261',
-                    '--modal-bg': '#3b1e1e',
-                    '--modal-border': 'rgba(255, 120, 80, 0.25)'
-                },
-                card: {
-                    faceBg: '#f5e6d3',
-                    frameOuter: '#7b3a2a',
-                    frameInner: '#a0523e',
-                    redText: '#b33a2a',
-                    blackText: '#4a2a1a',
-                    backColor: '#5e1e1e',
-                    backBorder: '#f4a261',
-                    backPattern: '#e76f51'
-                }
-            },
-            {
-                name: 'Лаванда',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 40% 60%, #4a2d6b 0%, #1a0a2e 100%)',
-                    '--game-bg': 'rgba(30, 15, 45, 0.5)',
-                    '--game-border': 'rgba(180, 130, 255, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(40, 10, 60, 0.7)',
-                    '--canvas-bg': '#221833',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(50, 0, 80, 0.4)',
-                    '--button-bg': 'rgba(60, 35, 85, 0.6)',
-                    '--button-border': 'rgba(180, 130, 255, 0.3)',
-                    '--button-hover-bg': 'rgba(180, 130, 255, 0.15)',
-                    '--title-color': '#c9a0ff',
-                    '--info-color': '#b8a0d0',
-                    '--win-color': '#c9a0ff',
-                    '--modal-bg': '#1e1630',
-                    '--modal-border': 'rgba(180, 130, 255, 0.25)'
-                },
-                card: {
-                    faceBg: '#f0e6f6',
-                    frameOuter: '#4a2d6b',
-                    frameInner: '#6b4a8a',
-                    redText: '#8b3050',
-                    blackText: '#2a1a3a',
-                    backColor: '#2e1a4a',
-                    backBorder: '#c9a0ff',
-                    backPattern: '#b38fd9'
-                }
-            },
-            {
-                name: 'Океан',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)',
-                    '--game-bg': 'rgba(10, 30, 40, 0.5)',
-                    '--game-border': 'rgba(70, 180, 210, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(0, 40, 60, 0.7)',
-                    '--canvas-bg': '#0e2933',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 80, 120, 0.4)',
-                    '--button-bg': 'rgba(20, 60, 80, 0.6)',
-                    '--button-border': 'rgba(70, 180, 210, 0.3)',
-                    '--button-hover-bg': 'rgba(70, 180, 210, 0.15)',
-                    '--title-color': '#7ec8e3',
-                    '--info-color': '#8fbcc8',
-                    '--win-color': '#7ec8e3',
-                    '--modal-bg': '#0c2028',
-                    '--modal-border': 'rgba(70, 180, 210, 0.25)'
-                },
-                card: {
-                    faceBg: '#e0f0f5',
-                    frameOuter: '#1a4050',
-                    frameInner: '#2a6070',
-                    redText: '#a04040',
-                    blackText: '#1a3030',
-                    backColor: '#0a2030',
-                    backBorder: '#7ec8e3',
-                    backPattern: '#46b8d8'
-                }
-            },
-            {
-                name: 'Золото',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)',
-                    '--game-bg': 'rgba(35, 25, 10, 0.5)',
-                    '--game-border': 'rgba(255, 210, 80, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(60, 40, 5, 0.7)',
-                    '--canvas-bg': '#2e2518',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 60, 0, 0.4)',
-                    '--button-bg': 'rgba(70, 55, 30, 0.6)',
-                    '--button-border': 'rgba(255, 210, 80, 0.3)',
-                    '--button-hover-bg': 'rgba(255, 210, 80, 0.15)',
-                    '--title-color': '#f4d03f',
-                    '--info-color': '#c9b86c',
-                    '--win-color': '#f4d03f',
-                    '--modal-bg': '#2a1f10',
-                    '--modal-border': 'rgba(255, 210, 80, 0.25)'
-                },
-                card: {
-                    faceBg: '#fdf5e6',
-                    frameOuter: '#8a6d3b',
-                    frameInner: '#b8965c',
-                    redText: '#8b3020',
-                    blackText: '#3e2e1a',
-                    backColor: '#3e2a0a',
-                    backBorder: '#f4d03f',
-                    backPattern: '#d4a017'
-                }
-            },
-            {
-                name: 'Вишня',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 70% 40%, #8b2a3a 0%, #2d0a10 100%)',
-                    '--game-bg': 'rgba(40, 15, 20, 0.5)',
-                    '--game-border': 'rgba(255, 90, 120, 0.2)',
-                    '--game-shadow': '0 20px 60px rgba(70, 10, 20, 0.7)',
-                    '--canvas-bg': '#2b181e',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(90, 0, 20, 0.4)',
-                    '--button-bg': 'rgba(70, 30, 40, 0.6)',
-                    '--button-border': 'rgba(255, 90, 120, 0.3)',
-                    '--button-hover-bg': 'rgba(255, 90, 120, 0.15)',
-                    '--title-color': '#ff8fa0',
-                    '--info-color': '#d89aa0',
-                    '--win-color': '#ff8fa0',
-                    '--modal-bg': '#2b1a20',
-                    '--modal-border': 'rgba(255, 90, 120, 0.25)'
-                },
-                card: {
-                    faceBg: '#fce4ec',
-                    frameOuter: '#8b2a3a',
-                    frameInner: '#b04550',
-                    redText: '#8b2a3a',
-                    blackText: '#3a1a20',
-                    backColor: '#5e1a28',
-                    backBorder: '#ff8fa0',
-                    backPattern: '#e5737c'
-                }
-            },
-            {
-                name: 'Полночь',
-                vars: {
-                    '--body-bg': 'radial-gradient(circle at 10% 20%, #0a0f1a 0%, #020408 100%)',
-                    '--game-bg': 'rgba(10, 14, 22, 0.5)',
-                    '--game-border': 'rgba(100, 120, 180, 0.15)',
-                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.9)',
-                    '--canvas-bg': '#090d16',
-                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.9), 0 8px 32px rgba(0,0,0,0.8)',
-                    '--button-bg': 'rgba(20, 28, 45, 0.6)',
-                    '--button-border': 'rgba(100, 120, 180, 0.3)',
-                    '--button-hover-bg': 'rgba(100, 120, 180, 0.15)',
-                    '--title-color': '#a0b4e0',
-                    '--info-color': '#7a8aaa',
-                    '--win-color': '#a0b4e0',
-                    '--modal-bg': '#0d1220',
-                    '--modal-border': 'rgba(100, 120, 180, 0.25)'
-                },
-                card: {
-                    faceBg: '#d0d8e8',
-                    frameOuter: '#1a2a40',
-                    frameInner: '#3a4a60',
-                    redText: '#804060',
-                    blackText: '#101828',
-                    backColor: '#0a1020',
-                    backBorder: '#a0b4e0',
-                    backPattern: '#7088b0'
-                }
-            }
-        ];
-
-        let cardColors = { ...themes[0].card };
-        const dpr = window.devicePixelRatio || 1;
-
-        // ============ ПАРАМЕТРЫ URL ============
-        const params = new URLSearchParams(window.location.search);
-        const gameId = params.get('game');
-        const isWatcher = params.has('watch');
-
-        // Извлекаем channel_id из хеша (#channel_id=...)
-        const hashString = window.location.hash.substring(1);
-        const hashParams = new URLSearchParams(hashString);
-        const channelId = hashParams.get('channel_id') || '';
-
-        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
-        let ws = null;
-        let isHost = false;
-        let spectatorsCount = 0;
-
-        // ============ ПЕРЕМЕННЫЕ ИГРЫ ============
-        let deck, stock, waste, foundations, columns;
-        let isDragging = false, dragCards = [], dragFromCol = -1, dragFromWaste = false;
-        let dragOffsetX, dragOffsetY, mouseX, mouseY;
-        let hoverCol = -1, hoverSuit = null;
-        let moves = 0, win = false;
-
-        let hintCards = [];
-        let hintTargetCol = -1;
-        let hintTargetSuit = null;
-        let hintTimeout = null;
-        let rafId = null;
-
-        let backPattern = document.createElement('canvas');
-
-        // ============ ОТМЕНА ХОДА ============
-        const MAX_UNDO = 50;
-        let undoStack = [];
-
-        function saveUndoState() {
-            const state = {
-                stock: stock.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
-                waste: waste.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
-                foundations: {
-                    '♠': foundations['♠'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
-                    '♥': foundations['♥'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
-                    '♦': foundations['♦'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
-                    '♣': foundations['♣'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y }))
-                },
-                columns: columns.map(col => col.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y }))),
-                moves: moves,
-                win: win
-            };
-            undoStack.push(state);
-            if (undoStack.length > MAX_UNDO) undoStack.shift();
+        // Подключение
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramGameId = urlParams.get('game');
+        if (paramGameId) {
+            gameId = paramGameId;
+            // Если есть gameId, подключаемся как хост или зритель
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => ws.send(JSON.stringify({ action: isHost?'create':'join', game_id: gameId }));
+        } else {
+            // Локальная игра: создаём свою на сервере
+            gameId = Math.random().toString(36).substr(2,6);
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => ws.send(JSON.stringify({ action: 'create', game_id: gameId }));
         }
 
-        function undoMove() {
-            if (isWatcher || win || !undoStack.length) return;
-            const state = undoStack.pop();
-            stock = state.stock.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o));
-            waste = state.waste.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o));
-            foundations = {
-                '♠': state.foundations['♠'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
-                '♥': state.foundations['♥'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
-                '♦': state.foundations['♦'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
-                '♣': state.foundations['♣'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o))
-            };
-            columns = state.columns.map(col => col.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)));
-            moves = state.moves;
-            win = state.win;
-            document.getElementById('winMessage').innerHTML = win ? '<div class="win">🏆 Победа!</div>' : '';
-            clearHint();
-            layoutCards();
-            drawAll();
-            sendGameState();
-        }
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'state') {
+                gameState = data.state;
+                draw();
+            } else if (data.type === 'error') {
+                alert(data.message);
+            }
+        };
 
-        // ============ ГЕНЕРАЦИЯ РУБАШКИ ============
-        function generateBackPattern() {
-            backPattern.width = CARD_W * dpr;
-            backPattern.height = CARD_H * dpr;
-            const bctx = backPattern.getContext('2d');
-            bctx.scale(dpr, dpr);
-            bctx.fillStyle = cardColors.backColor;
-            bctx.fillRect(0, 0, CARD_W, CARD_H);
-            bctx.strokeStyle = cardColors.backBorder;
-            bctx.lineWidth = 1.8;
-            bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
-            bctx.fillStyle = cardColors.backPattern;
-            const spacing = 22;
-            const offsetX = (CARD_W % spacing) / 2;
-            const offsetY = (CARD_H % spacing) / 2;
-            for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
-                for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
-                    bctx.beginPath();
-                    bctx.arc(x, y, 3.5, 0, Math.PI*2);
-                    bctx.fill();
-                }
-            }
-            bctx.setTransform(1, 0, 0, 1, 0, 0);
-        }
+        // Отрисовка
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = Math.min(1100, window.innerWidth-20); canvas.height = Math.min(700, window.innerHeight-20); draw(); }
+        window.onresize = resize;
+        resize();
 
-        class Card {
-            constructor(suit, rank, faceUp = false) {
-                this.suit = suit;
-                this.rank = rank;
-                this.faceUp = faceUp;
-                this.x = 0;
-                this.y = 0;
-            }
-            get color() {
-                return (this.suit === '♥' || this.suit === '♦') ? cardColors.redText : cardColors.blackText;
-            }
-            get value() { return RANKS.indexOf(this.rank); }
-            
-            draw(dragX, dragY, isDrag, index = 0, total = 1) {
-                const ctx = canvas.getContext('2d');
-                let cx = isDrag ? dragX : this.x;
-                let cy = isDrag ? dragY : this.y;
-                
-                ctx.save();
-                if (isDrag) {
-                    ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-                    ctx.shadowBlur = 25;
-                    ctx.shadowOffsetX = 2;
-                    ctx.shadowOffsetY = 2;
-                    ctx.globalAlpha = 0.95;
-                    const scale = 1.06;
-                    const centerX = cx + CARD_W/2;
-                    const centerY = cy + CARD_H/2;
-                    ctx.translate(centerX, centerY);
-                    ctx.scale(scale, scale);
-                    const offset = total > 1 ? (index - (total-1)/2) * 4 : 0;
-                    ctx.translate(offset, offset * 0.5);
-                    ctx.translate(-centerX, -centerY);
-                }
-                
-                if (this.faceUp) {
-                    ctx.fillStyle = cardColors.faceBg;
-                    ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = cardColors.frameOuter;
-                    ctx.lineWidth = 1.4;
-                    ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2);
-                    ctx.strokeStyle = cardColors.frameInner;
-                    ctx.lineWidth = 0.6;
-                    ctx.strokeRect(cx+5, cy+5, CARD_W-10, CARD_H-10);
-                    
-                    ctx.fillStyle = this.color;
-                    ctx.font = 'bold 18px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.rank, cx + 12, cy + 22);
-                    ctx.font = '14px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.suit, cx + 12, cy + 38);
-                    
-                    ctx.save();
-                    ctx.translate(cx + CARD_W - 18, cy + CARD_H - 18);
-                    ctx.rotate(Math.PI);
-                    ctx.font = 'bold 18px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.rank, 0, 0);
-                    ctx.font = '14px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.suit, 0, 17);
-                    ctx.restore();
-                    
-                    ctx.globalAlpha = 0.35;
-                    ctx.font = '48px "Georgia", "Times New Roman", serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2);
-                    ctx.textAlign = 'start';
-                    ctx.globalAlpha = 1.0;
-                    
-                    if (['J', 'Q', 'K'].includes(this.rank)) {
-                        ctx.beginPath();
-                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 22, 30, 0, 0, Math.PI*2);
-                        ctx.strokeStyle = cardColors.backBorder;
-                        ctx.lineWidth = 1.6;
-                        ctx.stroke();
-                        ctx.fillStyle = cardColors.backPattern.replace(')', ', 0.1)').replace('rgba', 'rgba');
-                        ctx.fill();
-                    }
-                } else {
-                    ctx.drawImage(backPattern, cx, cy, CARD_W, CARD_H);
-                }
-                ctx.restore();
-            }
-            
-            contains(mx, my) {
-                return mx >= this.x && mx <= this.x + CARD_W &&
-                       my >= this.y && my <= this.y + CARD_H;
-            }
-        }
-
-        function isValidGroup(cards) {
-            if (cards.length === 0) return false;
-            for (let i = 0; i < cards.length; i++) {
-                if (!cards[i].faceUp) return false;
-            }
-            for (let i = 0; i < cards.length - 1; i++) {
-                const cur = cards[i];
-                const next = cards[i+1];
-                if (cur.value !== next.value + 1) return false;
-                if (cur.color === next.color) return false;
-            }
-            return true;
-        }
-
-        function init() {
-            deck = [];
-            stock = [];
-            waste = [];
-            foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
-            columns = [[],[],[],[],[],[],[]];
-            moves = 0;
-            win = false;
-            document.getElementById('winMessage').innerHTML = '';
-            undoStack = [];
-            clearHint();
-            
+        function draw() {
+            if (!gameState) return;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            // Фонды
+            let x = 20, y = 10;
             for (let s of SUITS) {
-                for (let r of RANKS) {
-                    deck.push(new Card(s, r));
+                const f = gameState.foundations[s];
+                ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(x,y,CARD_W,CARD_H); ctx.setLineDash([]);
+                if (f.length) drawCard(f[0], x, y);
+                x += CARD_W + 6;
+            }
+            // Сток и отвал
+            let stockX = 20 + 4*(CARD_W+6) + 20;
+            ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(stockX,10,CARD_W,CARD_H); ctx.setLineDash([]);
+            if (gameState.stock_count > 0) {
+                // показать рубашку
+                drawCardBack(stockX, 10);
+            }
+            if (gameState.waste.length) drawCard(gameState.waste[0], stockX+CARD_W+12, 10);
+            // Столбцы
+            let cx = 20, cy = 150;
+            for (let col of gameState.columns) {
+                if (col.length === 0) {
+                    ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(cx,cy,CARD_W,CARD_H); ctx.setLineDash([]);
                 }
-            }
-            for (let i = deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]];
-            }
-            for (let col = 0; col < 7; col++) {
-                for (let row = 0; row <= col; row++) {
-                    const card = deck.pop();
-                    card.faceUp = (row === col);
-                    columns[col].push(card);
+                for (let i=0; i<col.length; i++) {
+                    const card = col[i];
+                    drawCard(card, cx, cy + i*CARD_OVERLAP);
                 }
-            }
-            stock = deck;
-            layoutCards();
-            drawAll();
-            sendGameState();
-        }
-
-        function newGame() {
-            if (isWatcher) return;
-            if (!deck) return;
-            init();
-        }
-
-        function layoutCards() {
-            const startX = 12, startY = 10;
-            let fx = startX, fy = startY;
-            const colStartX = startX, colStartY = 150;
-            const colSpacing = CARD_W + 9;
-            
-            for (let s of SUITS) {
-                if (foundations[s].length) {
-                    foundations[s][foundations[s].length-1].x = fx;
-                    foundations[s][foundations[s].length-1].y = fy;
-                }
-                fx += CARD_W + 6;
-            }
-            let sx = startX + 4*(CARD_W+6) + 18;
-            if (stock.length) {
-                stock[stock.length-1].x = sx;
-                stock[stock.length-1].y = startY;
-            }
-            if (waste.length) {
-                waste[waste.length-1].x = sx + CARD_W + 12;
-                waste[waste.length-1].y = startY;
-            }
-            let cx = colStartX, cy = colStartY;
-            for (let i = 0; i < 7; i++) {
-                let col = columns[i];
-                for (let j = 0; j < col.length; j++) {
-                    col[j].x = cx;
-                    col[j].y = cy + j * CARD_OVERLAP;
-                }
-                cx += colSpacing;
+                cx += CARD_W + 9;
             }
         }
 
-        function clearHint() {
-            hintCards = [];
-            hintTargetCol = -1;
-            hintTargetSuit = null;
-            if (hintTimeout) {
-                clearTimeout(hintTimeout);
-                hintTimeout = null;
+        function drawCard(card, x, y) {
+            if (!card.face_up) return drawCardBack(x, y);
+            ctx.fillStyle = '#faf0e6';
+            ctx.fillRect(x,y,CARD_W,CARD_H);
+            ctx.strokeStyle = '#333'; ctx.lineWidth=1; ctx.strokeRect(x,y,CARD_W,CARD_H);
+            ctx.fillStyle = (card.suit==='♥'||card.suit==='♦') ? '#c33' : '#222';
+            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, x+8, y+22);
+            ctx.font = '16px Georgia'; ctx.fillText(card.suit, x+8, y+40);
+            // перевёрнутый текст
+            ctx.save(); ctx.translate(x+CARD_W-8, y+CARD_H-8); ctx.rotate(Math.PI);
+            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank,0,0);
+            ctx.font = '16px Georgia'; ctx.fillText(card.suit,0,17);
+            ctx.restore();
+            // центральный символ
+            ctx.globalAlpha = 0.2;
+            ctx.font = '50px Georgia'; ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText(card.suit, x+CARD_W/2, y+CARD_H/2);
+            ctx.textAlign='start'; ctx.globalAlpha=1;
+        }
+
+        function drawCardBack(x, y) {
+            ctx.fillStyle = '#1e3b5c';
+            ctx.fillRect(x,y,CARD_W,CARD_H);
+            ctx.strokeStyle = '#d4af37'; ctx.lineWidth=1.5; ctx.strokeRect(x+4,y+4,CARD_W-8,CARD_H-8);
+            // узор
+            ctx.fillStyle = '#d4af37';
+            for (let i=6; i<CARD_W-6; i+=20) for (let j=6; j<CARD_H-6; j+=20) {
+                ctx.beginPath(); ctx.arc(x+i, y+j, 3, 0, Math.PI*2); ctx.fill();
             }
         }
 
-        function showHint() {
-            if (win || isWatcher) return;
-            if (!deck) return;
-            clearHint();
-            
-            for (let i = 0; i < 7; i++) {
-                if (columns[i].length > 0) {
-                    const card = columns[i][columns[i].length-1];
-                    if (canPlaceOnFoundation(card)) {
-                        hintCards = [card];
-                        hintTargetSuit = card.suit;
-                        drawAll();
-                        hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
-                        return;
-                    }
-                }
+        // Интерактивность
+        let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
+        canvas.onmousedown = (e) => {
+            if (!gameState) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            // Клик по стоку
+            let stockX = 20 + 4*(CARD_W+6) + 20;
+            if (mx>=stockX && mx<=stockX+CARD_W && my>=10 && my<=10+CARD_H) {
+                ws.send(JSON.stringify({ action: 'click_stock' }));
+                return;
             }
-            if (waste.length > 0) {
-                const card = waste[waste.length-1];
-                if (canPlaceOnFoundation(card)) {
-                    hintCards = [card];
-                    hintTargetSuit = card.suit;
-                    drawAll();
-                    hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+            // Отвал
+            if (gameState.waste.length) {
+                let wx = stockX+CARD_W+12, wy = 10;
+                if (mx>=wx && mx<=wx+CARD_W && my>=wy && my<=wy+CARD_H) {
+                    startDrag([gameState.waste[0]], -1, true, mx, my);
                     return;
                 }
             }
-            
-            if (waste.length > 0) {
-                const card = waste[waste.length-1];
-                for (let i = 0; i < 7; i++) {
-                    if (canPlaceOnColumn(card, columns[i])) {
-                        hintCards = [card];
-                        hintTargetCol = i;
-                        drawAll();
-                        hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+            // Столбцы
+            let cx = 20, cy = 150;
+            for (let i=0; i<gameState.columns.length; i++) {
+                const col = gameState.columns[i];
+                for (let j=col.length-1; j>=0; j--) {
+                    const card = col[j];
+                    const cardY = cy + j*CARD_OVERLAP;
+                    if (mx>=cx && mx<=cx+CARD_W && my>=cardY && my<=cardY+CARD_H) {
+                        if (!card.face_up) break;
+                        // Проверим, что это валидная группа
+                        // Группу определяем на сервере, но для отправки нужно знать количество
+                        // Здесь просто берём все от j до конца, сервер проверит
+                        const group = col.slice(j);
+                        startDrag(group, i, false, mx, my);
                         return;
                     }
                 }
-            }
-            for (let i = 0; i < 7; i++) {
-                if (columns[i].length === 0) continue;
-                for (let j = columns[i].length-1; j >= 0; j--) {
-                    if (!columns[i][j].faceUp) break;
-                    const group = columns[i].slice(j);
-                    if (isValidGroup(group)) {
-                        const movingCard = group[0];
-                        for (let k = 0; k < 7; k++) {
-                            if (k === i) continue;
-                            if (canPlaceOnColumn(movingCard, columns[k])) {
-                                hintCards = group;
-                                hintTargetCol = k;
-                                drawAll();
-                                hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        function getCanvasSizes() {
-            const cvs = document.getElementById('canvas');
-            const rect = cvs.getBoundingClientRect();
-            return {
-                logicalWidth: Math.min(window.innerWidth - 40, 1120),
-                logicalHeight: Math.min(window.innerHeight - 250, 700),
-                rectWidth: rect.width,
-                rectHeight: rect.height
-            };
-        }
-
-        function drawAll() {
-            const cvs = document.getElementById('canvas');
-            const ctx = cvs.getContext('2d');
-            const sizes = getCanvasSizes();
-            const logicalWidth = sizes.logicalWidth;
-            const logicalHeight = sizes.logicalHeight;
-
-            cvs.width = logicalWidth * dpr;
-            cvs.height = logicalHeight * dpr;
-            cvs.style.width = logicalWidth + 'px';
-            cvs.style.height = logicalHeight + 'px';
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.scale(dpr, dpr);
-            ctx.imageSmoothingEnabled = true;
-            
-            ctx.clearRect(0, 0, logicalWidth, logicalHeight);
-            
-            let fx = 12, fy = 10;
-            for (let s of SUITS) {
-                if (foundations[s].length) {
-                    foundations[s][foundations[s].length-1].draw();
-                } else {
-                    ctx.strokeStyle = (hintTargetSuit === s) ? '#ffd700' : (hoverSuit === s ? '#ebc25e' : 'rgba(255,255,255,0.08)');
-                    ctx.lineWidth = (hintTargetSuit === s) ? 3 : (hoverSuit === s ? 2 : 1);
-                    ctx.setLineDash([6,6]);
-                    ctx.strokeRect(fx, fy, CARD_W, CARD_H);
-                    ctx.setLineDash([]);
-                }
-                fx += CARD_W + 6;
-            }
-            
-            let sx = 12 + 4*(CARD_W+6) + 18;
-            if (stock.length) stock[stock.length-1].draw();
-            else {
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-                ctx.setLineDash([6,6]);
-                ctx.strokeRect(sx, 10, CARD_W, CARD_H);
-                ctx.setLineDash([]);
-            }
-            if (waste.length && !(isDragging && dragFromWaste && dragCards.length > 0)) {
-                waste[waste.length-1].draw();
-            }
-            
-            let cx = 12, cy = 150;
-            const colSpacing = CARD_W + 9;
-            for (let i = 0; i < 7; i++) {
-                if (hoverCol === i && isDragging) {
-                    ctx.fillStyle = 'rgba(235, 194, 94, 0.1)';
-                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + CARD_OVERLAP : cy;
-                    ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
-                }
-                if (hintTargetCol === i && !isDragging) {
-                    ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
-                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + CARD_OVERLAP : cy;
-                    ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
-                }
-                for (let card of columns[i]) {
-                    if (!dragCards.includes(card)) {
-                        card.draw();
-                        if (hintCards.includes(card) && !isDragging) {
-                            ctx.save();
-                            ctx.strokeStyle = '#ffd700';
-                            ctx.lineWidth = 3;
-                            ctx.shadowColor = '#ffd700';
-                            ctx.shadowBlur = 10;
-                            ctx.strokeRect(card.x-1, card.y-1, CARD_W+2, CARD_H+2);
-                            ctx.restore();
-                        }
-                    }
-                }
-                cx += colSpacing;
-            }
-            
-            if (isDragging && dragCards.length > 0) {
-                for (let i = 0; i < dragCards.length; i++) {
-                    const card = dragCards[i];
-                    card.draw(
-                        mouseX - dragOffsetX + (i * 2),
-                        mouseY - dragOffsetY + (i * 2),
-                        true,
-                        i,
-                        dragCards.length
-                    );
-                }
-            }
-            
-            ctx.font = '14px Georgia, serif';
-            ctx.fillStyle = 'rgba(141, 152, 176, 0.6)';
-            ctx.fillText(`Ходов: ${moves}`, logicalWidth - 90, logicalHeight - 10);
-            if (isWatcher || spectatorsCount > 0) {
-                ctx.fillText(`👁 ${spectatorsCount}`, logicalWidth - 180, logicalHeight - 10);
-            }
-        }
-
-        function canPlaceOnFoundation(card) {
-            const arr = foundations[card.suit];
-            if (arr.length === 0) return card.rank === 'A';
-            const top = arr[arr.length-1];
-            return RANKS.indexOf(card.rank) === RANKS.indexOf(top.rank) + 1;
-        }
-
-        function canPlaceOnColumn(card, column) {
-            if (column.length === 0) return card.rank === 'K';
-            const top = column[column.length-1];
-            return (top.color !== card.color) && (top.value === card.value + 1);
-        }
-
-        function checkWin() {
-            if (Object.values(foundations).every(arr => arr.length === 13)) {
-                win = true;
-                document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
-                playWin();
-            }
-        }
-
-        canvas.onmousedown = (e) => {
-            if (win) { init(); return; }
-            if (isWatcher) return;
-            clearHint();
-            const r = canvas.getBoundingClientRect();
-            const sizes = getCanvasSizes();
-            const mx = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
-            const my = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
-            
-            let sx = 12 + 4*(CARD_W+6) + 18;
-            if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
-                saveUndoState();
-                if (stock.length) {
-                    waste.push(stock.pop());
-                    waste[waste.length-1].faceUp = true;
-                } else {
-                    while (waste.length) {
-                        stock.push(waste.pop());
-                        stock[stock.length-1].faceUp = false;
-                    }
-                }
-                layoutCards();
-                drawAll();
-                sendGameState();
-                return;
-            }
-            
-            if (waste.length && waste[waste.length-1].contains(mx, my)) {
-                startDrag([waste[waste.length-1]], -1, true, mx, my);
-                return;
-            }
-            
-            let cx = 12, cy = 150;
-            const colSpacing = CARD_W + 9;
-            for (let i = 0; i < 7; i++) {
-                for (let j = columns[i].length-1; j >= 0; j--) {
-                    if (columns[i][j].faceUp && columns[i][j].contains(mx, my)) {
-                        const group = columns[i].slice(j);
-                        if (isValidGroup(group)) {
-                            startDrag(group, i, false, mx, my);
-                        }
-                        return;
-                    }
-                }
-                cx += colSpacing;
+                cx += CARD_W + 9;
             }
         };
 
-        function startDrag(cards, col, wasteFlag, mx, my) {
-            if (isWatcher) return;
-            isDragging = true;
-            dragCards = cards;
-            dragFromCol = col;
-            dragFromWaste = wasteFlag;
-            dragOffsetX = mx - cards[0].x;
-            dragOffsetY = my - cards[0].y;
-            mouseX = mx;
-            mouseY = my;
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
+        function startDrag(cards, col, waste, mx, my) {
+            drag = { cards, col, waste, offsetX: mx - cards[0].x, offsetY: my - cards[0].y };
+            dragCards = cards; fromCol = col; fromWaste = waste;
         }
 
         canvas.onmousemove = (e) => {
-            const r = canvas.getBoundingClientRect();
-            const sizes = getCanvasSizes();
-            mouseX = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
-            mouseY = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
-            if (!isDragging) return;
-            
-            hoverCol = -1;
-            hoverSuit = null;
-            let fx = 12, fy = 10;
+            if (!drag) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            // Перемещаем карты визуально (временный эффект)
+            draw();
+            for (let i=0; i<dragCards.length; i++) {
+                drawCard(dragCards[i], mx - drag.offsetX + i*2, my - drag.offsetY + i*2);
+            }
+        };
+
+        canvas.onmouseup = (e) => {
+            if (!drag) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            // Определить цель
+            let targetType = null, targetIndex = null, targetSuit = null;
+            // Проверка фундаментов
+            let fx = 20, fy = 10;
             for (let s of SUITS) {
-                if (mouseX >= fx && mouseX <= fx+CARD_W && mouseY >= fy && mouseY <= fy+CARD_H)
-                    hoverSuit = s;
+                if (mx>=fx && mx<=fx+CARD_W && my>=fy && my<=fy+CARD_H) {
+                    targetType = 'foundation'; targetSuit = s; break;
+                }
                 fx += CARD_W + 6;
             }
-            let cx = 12, cy = 150;
-            const colSpacing = CARD_W + 9;
-            for (let i = 0; i < 7; i++) {
-                if (mouseX >= cx && mouseX <= cx+CARD_W && mouseY >= cy)
-                    hoverCol = i;
-                cx += colSpacing;
-            }
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
-        };
-
-        canvas.onmouseup = () => {
-            if (!isDragging || isWatcher) return;
-            let placed = false;
-            if (hoverSuit && dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
-                saveUndoState();
-                foundations[hoverSuit].push(dragCards[0]);
-                if (dragFromWaste) waste.pop();
-                else columns[dragFromCol].splice(columns[dragFromCol].length-1);
-                if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
-                    columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
-                moves++;
-                placed = true;
-            } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
-                saveUndoState();
-                if (dragFromWaste) columns[hoverCol].push(waste.pop());
-                else {
-                    const moved = columns[dragFromCol].splice(columns[dragFromCol].length-dragCards.length);
-                    columns[hoverCol].push(...moved);
+            // Проверка столбцов
+            if (!targetType) {
+                let cx = 20, cy = 150;
+                for (let i=0; i<7; i++) {
+                    if (mx>=cx && mx<=cx+CARD_W && my>=cy && my<=canvas.height) {
+                        targetType = 'column'; targetIndex = i; break;
+                    }
+                    cx += CARD_W + 9;
                 }
-                if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
-                    columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
-                moves++;
-                placed = true;
             }
-            
-            if (placed) playPlace();
-            
-            isDragging = false;
-            dragCards = [];
-            dragFromCol = -1;
-            dragFromWaste = false;
-            hoverCol = -1;
-            hoverSuit = null;
-            layoutCards();
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
-            if (placed) checkWin();
-            sendGameState();
+            if (targetType) {
+                // Отправить ход на сервер
+                ws.send(JSON.stringify({
+                    action: 'move',
+                    from: fromWaste ? { type: 'waste' } : { type: 'column', index: fromCol },
+                    card_count: dragCards.length,
+                    to: targetType === 'foundation' ? { type: 'foundation', suit: targetSuit } : { type: 'column', index: targetIndex }
+                }));
+            }
+            drag = null; dragCards = [];
         };
 
+        // Двойной клик для авто-перемещения на фундамент
         canvas.ondblclick = (e) => {
-            if (win || isWatcher) return;
-            clearHint();
-            const r = canvas.getBoundingClientRect();
-            const sizes = getCanvasSizes();
-            const mx = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
-            const my = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
-            for (let i = 0; i < 7; i++) {
-                if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
-                    const card = columns[i][columns[i].length-1];
-                    if (canPlaceOnFoundation(card)) {
-                        saveUndoState();
-                        foundations[card.suit].push(columns[i].pop());
-                        if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
-                            columns[i][columns[i].length-1].faceUp = true;
-                        moves++;
-                        playPlace();
-                        checkWin();
-                        layoutCards();
-                        drawAll();
-                        sendGameState();
+            if (!gameState) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            let cx = 20, cy = 150;
+            for (let i=0; i<gameState.columns.length; i++) {
+                const col = gameState.columns[i];
+                if (col.length) {
+                    const card = col[col.length-1];
+                    const cardY = cy + (col.length-1)*CARD_OVERLAP;
+                    if (mx>=cx && mx<=cx+CARD_W && my>=cardY && my<=cardY+CARD_H) {
+                        ws.send(JSON.stringify({ action: 'auto_move', from: { type: 'column', index: i } }));
                         return;
                     }
                 }
+                cx += CARD_W + 9;
+            }
+            // отвал
+            let stockX = 20 + 4*(CARD_W+6) + 20;
+            let wx = stockX+CARD_W+12, wy = 10;
+            if (gameState.waste.length && mx>=wx && mx<=wx+CARD_W && my>=wy && my<=wy+CARD_H) {
+                ws.send(JSON.stringify({ action: 'auto_move', from: { type: 'waste' } }));
             }
         };
-
-        window.addEventListener('resize', () => {
-            layoutCards();
-            drawAll();
-        });
-
-        function getGameState() {
-            return {
-                foundations: {
-                    '♠': foundations['♠'].length,
-                    '♥': foundations['♥'].length,
-                    '♦': foundations['♦'].length,
-                    '♣': foundations['♣'].length
-                },
-                moves: moves,
-                win: win
-            };
-        }
-
-        function sendGameState() {
-            if (!ws || ws.readyState !== WebSocket.OPEN || !isHost) return;
-            ws.send(JSON.stringify({
-                action: 'move',
-                game_id: gameId,
-                state: getGameState()
-            }));
-        }
-
-        function updateGameFromState(state) {
-            moves = state.moves;
-            for (let s of SUITS) {
-                foundations[s].length = state.foundations[s];
-            }
-            if (state.win) {
-                win = true;
-                document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
-                playWin();
-            }
-            layoutCards();
-            drawAll();
-        }
-
-        // ============ МОДАЛЬНОЕ ОКНО ДЛЯ НАБЛЮДЕНИЯ ============
-        let watchListWs = null;
-
-        function openWatchModal() {
-            document.getElementById('watchModal').classList.add('show');
-            document.getElementById('gameList').innerHTML = 'Поиск активных игр...';
-            
-            if (watchListWs) {
-                watchListWs.close();
-                watchListWs = null;
-            }
-            
-            watchListWs = new WebSocket(WS_URL);
-            watchListWs.onopen = () => {
-                const payload = { action: 'list' };
-                if (channelId) payload.channel_id = channelId;
-                watchListWs.send(JSON.stringify(payload));
-            };
-            watchListWs.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'game_list') {
-                        const games = data.games || [];
-                        const listDiv = document.getElementById('gameList');
-                        if (games.length === 0) {
-                            listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр в этом голосовом канале.</p>';
-                        } else if (games.length === 1) {
-                            closeWatchModal();
-                            window.location.href = `?game=${games[0].id}&watch=true`;
-                        } else {
-                            listDiv.innerHTML = games.map(game => `
-                                <div class="game-item" onclick="watchGameById('${game.id}')">
-                                    <span>Игра <span class="game-id">${game.id}</span></span>
-                                    <span style="font-size:12px;color:#8d98b0;">👁 ${game.spectators || 0} зрителей</span>
-                                </div>
-                            `).join('');
-                        }
-                    }
-                } catch(e) {
-                    document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список игр не загружен. Введите ID вручную.</p>';
-                }
-            };
-            watchListWs.onerror = () => {
-                document.getElementById('gameList').innerHTML = '<p style="color:#e74c3c;">Ошибка подключения к серверу</p>';
-            };
-            watchListWs.onclose = () => {
-                setTimeout(() => {
-                    if (document.getElementById('gameList').innerHTML === 'Поиск активных игр...') {
-                        document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список игр не загружен. Введите ID вручную.</p>';
-                    }
-                }, 2000);
-            };
-        }
-
-        function closeWatchModal() {
-            document.getElementById('watchModal').classList.remove('show');
-            if (watchListWs) {
-                watchListWs.close();
-                watchListWs = null;
-            }
-        }
-
-        function watchGameById(id) {
-            closeWatchModal();
-            window.location.href = `?game=${id}&watch=true`;
-        }
-
-        function joinManualGame() {
-            const id = document.getElementById('manualGameId').value.trim();
-            if (id) {
-                watchGameById(id);
-            }
-        }
-
-        document.getElementById('watchModal').addEventListener('click', function(e) {
-            if (e.target === this) closeWatchModal();
-        });
-
-        function joinAsWatcher() {
-            openWatchModal();
-        }
-
-        function shareGame() {
-            if (gameId) {
-                navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!'));
-            } else {
-                alert('Сначала создайте игру через Discord командой /solitaire');
-            }
-        }
-
-        function connectWebSocket() {
-            if (!gameId) return;
-            ws = new WebSocket(WS_URL);
-            ws.onopen = () => {
-                if (isWatcher) {
-                    ws.send(JSON.stringify({
-                        action: 'join',
-                        game_id: gameId,
-                        player_id: 'observer_' + Math.random().toString(36).substr(2, 9)
-                    }));
-                    document.getElementById('spectatorBadge').innerHTML = 
-                        '<div style="background:rgba(212,175,55,0.1);padding:6px 16px;border-radius:20px;display:inline-block;border:1px solid rgba(212,175,55,0.2);color:#ebc25e;">👁 Наблюдаем за игрой</div>';
-                } else {
-                    ws.send(JSON.stringify({
-                        action: 'create',
-                        game_id: gameId,
-                        player_id: 'host_' + Math.random().toString(36).substr(2, 9)
-                    }));
-                    isHost = true;
-                }
-            };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'state_update') {
-                    updateGameFromState(data.state);
-                } else if (data.type === 'spectator_update') {
-                    spectatorsCount = data.count;
-                    drawAll();
-                } else if (data.type === 'joined') {
-                    if (data.state) updateGameFromState(data.state);
-                }
-            };
-            ws.onclose = () => {
-                setTimeout(connectWebSocket, 3000);
-            };
-        }
-
-        function startApp() {
-            init();
-            loadTheme();
-            generateBackPattern();
-            layoutCards();
-            drawAll();
-            
-            if (gameId) {
-                if (isWatcher) {
-                    document.getElementById('btnWatch').classList.add('hidden');
-                    document.getElementById('btnShare').classList.add('hidden');
-                    document.getElementById('btnNewGame').classList.add('hidden');
-                    document.getElementById('btnHint').classList.add('hidden');
-                    document.getElementById('btnUndo').classList.add('hidden');
-                }
-                connectWebSocket();
-            } else {
-                document.getElementById('btnWatch').classList.remove('hidden');
-            }
-        }
-
-        // ============ ПРИМЕНЕНИЕ ТЕМ ============
-        function applyTheme(theme) {
-            const root = document.documentElement;
-            Object.entries(theme.vars).forEach(([prop, value]) => {
-                root.style.setProperty(prop, value);
-            });
-            cardColors = { ...theme.card };
-            generateBackPattern();
-            drawAll();
-        }
-
-        function loadTheme() {
-            const saved = localStorage.getItem('solitaire_theme');
-            if (saved) {
-                try {
-                    const index = parseInt(saved);
-                    if (index >= 0 && index < themes.length) {
-                        applyTheme(themes[index]);
-                        return;
-                    }
-                } catch(e) {}
-            }
-            applyTheme(themes[0]);
-        }
-
-        function saveThemeIndex(index) {
-            localStorage.setItem('solitaire_theme', index);
-        }
-
-        function resetTheme() {
-            applyTheme(themes[0]);
-            saveThemeIndex(0);
-            closeThemePicker();
-        }
-
-        function showThemePicker() {
-            const grid = document.getElementById('themeGrid');
-            grid.innerHTML = '';
-            themes.forEach((theme, idx) => {
-                const card = document.createElement('div');
-                card.className = 'theme-card';
-                const preview = document.createElement('div');
-                preview.className = 'theme-preview';
-                preview.style.background = theme.vars['--body-bg'];
-                const label = document.createElement('div');
-                label.className = 'theme-label';
-                label.textContent = theme.name;
-                card.appendChild(preview);
-                card.appendChild(label);
-                card.onclick = () => {
-                    applyTheme(theme);
-                    saveThemeIndex(idx);
-                    closeThemePicker();
-                };
-                grid.appendChild(card);
-            });
-            document.getElementById('themeModal').classList.add('show');
-        }
-
-        function closeThemePicker() {
-            document.getElementById('themeModal').classList.remove('show');
-        }
-        document.getElementById('themeModal').addEventListener('click', function(e) {
-            if (e.target === this) closeThemePicker();
-        });
-
-        // ============ ЗВУКИ ============
-        let audioCtx = null;
-        function ensureAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-
-        function playTone(freq, duration, type = 'sine', vol = 0.1) {
-            ensureAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
-        function playWin() {
-            ensureAudio();
-            const notes = [523, 659, 784, 1047];
-            notes.forEach((freq, i) => {
-                setTimeout(() => playTone(freq, 0.2, 'triangle', 0.12), i * 100);
-            });
-        }
-
-        startApp();
     </script>
 </body>
 </html>
