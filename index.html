@@ -5,9 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>🃏 Пасьянс Косынка | Discord Activity</title>
     <style>
+        :root {
+            --body-bg: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
+            --game-bg: rgba(18, 25, 42, 0.4);
+            --game-border: rgba(212, 175, 55, 0.15);
+            --game-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            --canvas-bg: #111c2f;
+            --canvas-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6);
+            --button-bg: rgba(30, 45, 70, 0.6);
+            --button-border: rgba(212, 175, 55, 0.3);
+            --button-hover-bg: rgba(212, 175, 55, 0.15);
+            --title-color: #ebc25e;
+            --info-color: #8d98b0;
+            --win-color: #ebc25e;
+            --modal-bg: #151e2e;
+            --modal-border: rgba(212, 175, 55, 0.2);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: #0d111c; 
+            background: var(--body-bg);
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -15,54 +32,50 @@
             font-family: 'Georgia', 'Times New Roman', serif; 
             color: #e0e0e0; 
             user-select: none;
-            background-image: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
-            transition: background 0.5s ease, background-image 0.5s ease;
+            transition: background 0.6s ease;
         }
         #game { 
             text-align: center; 
-            background: rgba(18, 25, 42, 0.4); 
+            background: var(--game-bg);
             backdrop-filter: blur(8px);
             padding: 25px 30px;
             border-radius: 24px; 
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            border: 1px solid var(--game-border);
+            box-shadow: var(--game-shadow);
             width: 95vw; 
             max-width: 1120px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
         }
         h1 { 
             margin-bottom: 12px; 
             font-size: 32px;
             letter-spacing: 2px;
-            color: #ebc25e; 
+            color: var(--title-color);
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            transition: color 0.6s ease;
         }
-        #spectatorBadge {
-            margin-bottom: 10px;
-            font-size: 14px;
-            min-height: 20px;
-        }
+        #spectatorBadge { margin-bottom: 10px; font-size: 14px; min-height: 20px; }
         canvas { 
             border-radius: 16px; 
-            background: #111c2f; 
+            background: var(--canvas-bg);
             cursor: grab; 
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6); 
+            box-shadow: var(--canvas-shadow);
             border: 1px solid rgba(212, 175, 55, 0.1);
             display: block;
-            max-width: 100%;
-            height: auto;
         }
         canvas:active { cursor: grabbing; }
         .info { 
             margin-top: 14px; 
             font-size: 14px; 
-            color: #8d98b0; 
+            color: var(--info-color);
             letter-spacing: 0.5px;
+            transition: color 0.6s ease;
         }
         .win { 
-            color: #ebc25e; 
+            color: var(--win-color);
             font-size: 26px; 
             font-weight: bold; 
             margin-top: 12px; 
@@ -80,8 +93,8 @@
         button { 
             padding: 14px 32px; 
             color: #e0e0e0; 
-            background: rgba(30, 45, 70, 0.6);
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            background: var(--button-bg);
+            border: 1px solid var(--button-border);
             border-radius: 12px; 
             cursor: pointer; 
             font-size: 15px; 
@@ -93,17 +106,17 @@
         }
         button:hover { 
             transform: translateY(-3px); 
-            background: rgba(212, 175, 55, 0.15);
-            border-color: #ebc25e;
+            background: var(--button-hover-bg);
+            border-color: var(--title-color);
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15); 
         }
         .btn-new { color: #e6c86a; }
         .btn-spectate { color: #b0bce6; }
         .btn-share { color: #9aaec2; }
-        .btn-bg { color: #c0a0b0; }
+        .btn-theme { color: #c0a0b0; }
         .hidden { display: none !important; }
 
-        /* Модальное окно выбора фона */
+        /* Модальное окно */
         .modal { 
             display: none; 
             position: fixed; 
@@ -115,32 +128,48 @@
         }
         .modal.show { display: flex; }
         .modal-content { 
-            background: #151e2e; 
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            background: var(--modal-bg);
+            border: 1px solid var(--modal-border);
             border-radius: 20px; 
             padding: 25px; 
-            max-width: 400px; 
+            max-width: 480px; 
             width: 90%;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transition: background 0.6s ease, border-color 0.6s ease;
         }
-        .modal h3 { margin-bottom: 15px; color: #ebc25e; font-size: 20px; }
-        .bg-grid { 
+        .modal h3 { margin-bottom: 15px; color: var(--title-color); font-size: 20px; }
+        .theme-grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
+            gap: 12px; 
             margin-bottom: 15px;
         }
-        .bg-option {
+        .theme-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 14px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            background: rgba(255,255,255,0.02);
+        }
+        .theme-card:hover {
+            border-color: var(--title-color);
+            background: rgba(255,255,255,0.05);
+        }
+        .theme-preview {
             width: 100%;
             aspect-ratio: 1;
-            border-radius: 12px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .bg-option:hover {
-            border-color: #ebc25e;
-            transform: scale(1.05);
+        .theme-label {
+            font-size: 11px;
+            color: var(--info-color);
+            text-align: center;
         }
         .close-btn { 
             margin-top: 10px; 
@@ -162,6 +191,8 @@
             width: 100%;
             padding: 10px;
             font-size: 14px;
+            color: #b0bce6;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -176,27 +207,278 @@
             <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
             <button class="btn-spectate" id="btnWatch" onclick="joinAsWatcher()">👁 Смотреть игру</button>
             <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
-            <button class="btn-bg" onclick="showBackgroundPicker()">🎨 Фон</button>
+            <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
         </div>
     </div>
 
-    <!-- Модальное окно выбора фона -->
-    <div class="modal" id="bgModal">
+    <!-- Модальное окно -->
+    <div class="modal" id="themeModal">
         <div class="modal-content">
-            <h3>🎨 Выберите фон</h3>
-            <div class="bg-grid" id="bgGrid"></div>
-            <button class="reset-btn" onclick="resetBackground()">↩ Сбросить на стандартный</button>
-            <button class="close-btn" onclick="closeBackgroundPicker()">✕ Закрыть</button>
+            <h3>🎨 Выберите тему</h3>
+            <div class="theme-grid" id="themeGrid"></div>
+            <button class="reset-btn" onclick="resetTheme()">↩ Стандартная тема</button>
+            <button class="close-btn" onclick="closeThemePicker()">✕ Закрыть</button>
         </div>
     </div>
 
     <script>
         // ============ НАСТРОЙКИ ============
-        const WS_URL = 'ws://localhost:8765';   // замените на публичный wss:// при деплое
-        const CARD_W = 95, CARD_H = 120;        // размер 95×120
-        const CARD_OVERLAP = 30;                // перекрытие в столбцах
+        const WS_URL = 'ws://localhost:8765';
+        const CARD_W = 95, CARD_H = 120;
+        const CARD_OVERLAP = 30;
         const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+        // ============ ТЕМЫ ============
+        const themes = [
+            {
+                name: 'Классика',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)',
+                    '--game-bg': 'rgba(18, 25, 42, 0.4)',
+                    '--game-border': 'rgba(212, 175, 55, 0.15)',
+                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.7)',
+                    '--canvas-bg': '#111c2f',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6)',
+                    '--button-bg': 'rgba(30, 45, 70, 0.6)',
+                    '--button-border': 'rgba(212, 175, 55, 0.3)',
+                    '--button-hover-bg': 'rgba(212, 175, 55, 0.15)',
+                    '--title-color': '#ebc25e',
+                    '--info-color': '#8d98b0',
+                    '--win-color': '#ebc25e',
+                    '--modal-bg': '#151e2e',
+                    '--modal-border': 'rgba(212, 175, 55, 0.2)'
+                }
+            },
+            {
+                name: 'Изумруд',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 30% 70%, #0d4d3c 0%, #051a14 100%)',
+                    '--game-bg': 'rgba(14, 40, 35, 0.5)',
+                    '--game-border': 'rgba(0, 200, 150, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 30, 20, 0.8)',
+                    '--canvas-bg': '#0a2a22',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 50, 30, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 45, 0.6)',
+                    '--button-border': 'rgba(0, 200, 150, 0.3)',
+                    '--button-hover-bg': 'rgba(0, 200, 150, 0.15)',
+                    '--title-color': '#7ed4b5',
+                    '--info-color': '#8fbcac',
+                    '--win-color': '#7ed4b5',
+                    '--modal-bg': '#0e2822',
+                    '--modal-border': 'rgba(0, 200, 150, 0.25)'
+                }
+            },
+            {
+                name: 'Закат',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)',
+                    '--game-bg': 'rgba(50, 15, 15, 0.5)',
+                    '--game-border': 'rgba(255, 120, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(80, 20, 10, 0.7)',
+                    '--canvas-bg': '#3b1818',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 10, 0, 0.4)',
+                    '--button-bg': 'rgba(80, 30, 30, 0.6)',
+                    '--button-border': 'rgba(255, 120, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 120, 80, 0.15)',
+                    '--title-color': '#f4a261',
+                    '--info-color': '#e0a88a',
+                    '--win-color': '#f4a261',
+                    '--modal-bg': '#3b1e1e',
+                    '--modal-border': 'rgba(255, 120, 80, 0.25)'
+                }
+            },
+            {
+                name: 'Лаванда',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 40% 60%, #4a2d6b 0%, #1a0a2e 100%)',
+                    '--game-bg': 'rgba(30, 15, 45, 0.5)',
+                    '--game-border': 'rgba(180, 130, 255, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(40, 10, 60, 0.7)',
+                    '--canvas-bg': '#221833',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(50, 0, 80, 0.4)',
+                    '--button-bg': 'rgba(60, 35, 85, 0.6)',
+                    '--button-border': 'rgba(180, 130, 255, 0.3)',
+                    '--button-hover-bg': 'rgba(180, 130, 255, 0.15)',
+                    '--title-color': '#c9a0ff',
+                    '--info-color': '#b8a0d0',
+                    '--win-color': '#c9a0ff',
+                    '--modal-bg': '#1e1630',
+                    '--modal-border': 'rgba(180, 130, 255, 0.25)'
+                }
+            },
+            {
+                name: 'Океан',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)',
+                    '--game-bg': 'rgba(10, 30, 40, 0.5)',
+                    '--game-border': 'rgba(70, 180, 210, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 40, 60, 0.7)',
+                    '--canvas-bg': '#0e2933',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 80, 120, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 80, 0.6)',
+                    '--button-border': 'rgba(70, 180, 210, 0.3)',
+                    '--button-hover-bg': 'rgba(70, 180, 210, 0.15)',
+                    '--title-color': '#7ec8e3',
+                    '--info-color': '#8fbcc8',
+                    '--win-color': '#7ec8e3',
+                    '--modal-bg': '#0c2028',
+                    '--modal-border': 'rgba(70, 180, 210, 0.25)'
+                }
+            },
+            {
+                name: 'Золото',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)',
+                    '--game-bg': 'rgba(35, 25, 10, 0.5)',
+                    '--game-border': 'rgba(255, 210, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(60, 40, 5, 0.7)',
+                    '--canvas-bg': '#2e2518',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 60, 0, 0.4)',
+                    '--button-bg': 'rgba(70, 55, 30, 0.6)',
+                    '--button-border': 'rgba(255, 210, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 210, 80, 0.15)',
+                    '--title-color': '#f4d03f',
+                    '--info-color': '#c9b86c',
+                    '--win-color': '#f4d03f',
+                    '--modal-bg': '#2a1f10',
+                    '--modal-border': 'rgba(255, 210, 80, 0.25)'
+                }
+            },
+            {
+                name: 'Вишня',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 70% 40%, #8b2a3a 0%, #2d0a10 100%)',
+                    '--game-bg': 'rgba(40, 15, 20, 0.5)',
+                    '--game-border': 'rgba(255, 90, 120, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(70, 10, 20, 0.7)',
+                    '--canvas-bg': '#2b181e',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(90, 0, 20, 0.4)',
+                    '--button-bg': 'rgba(70, 30, 40, 0.6)',
+                    '--button-border': 'rgba(255, 90, 120, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 90, 120, 0.15)',
+                    '--title-color': '#ff8fa0',
+                    '--info-color': '#d89aa0',
+                    '--win-color': '#ff8fa0',
+                    '--modal-bg': '#2b1a20',
+                    '--modal-border': 'rgba(255, 90, 120, 0.25)'
+                }
+            },
+            {
+                name: 'Полночь',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 10% 20%, #0a0f1a 0%, #020408 100%)',
+                    '--game-bg': 'rgba(10, 14, 22, 0.5)',
+                    '--game-border': 'rgba(100, 120, 180, 0.15)',
+                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.9)',
+                    '--canvas-bg': '#090d16',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.9), 0 8px 32px rgba(0,0,0,0.8)',
+                    '--button-bg': 'rgba(20, 28, 45, 0.6)',
+                    '--button-border': 'rgba(100, 120, 180, 0.3)',
+                    '--button-hover-bg': 'rgba(100, 120, 180, 0.15)',
+                    '--title-color': '#a0b4e0',
+                    '--info-color': '#7a8aaa',
+                    '--win-color': '#a0b4e0',
+                    '--modal-bg': '#0d1220',
+                    '--modal-border': 'rgba(100, 120, 180, 0.25)'
+                }
+            }
+        ];
+
+        function applyTheme(themeVars) {
+            const root = document.documentElement;
+            Object.entries(themeVars).forEach(([prop, value]) => {
+                root.style.setProperty(prop, value);
+            });
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('solitaire_theme');
+            if (saved) {
+                try {
+                    const theme = JSON.parse(saved);
+                    applyTheme(theme);
+                    return;
+                } catch(e) {}
+            }
+            applyTheme(themes[0].vars);
+        }
+
+        function saveTheme(themeVars) {
+            localStorage.setItem('solitaire_theme', JSON.stringify(themeVars));
+        }
+
+        function resetTheme() {
+            const defaultVars = themes[0].vars;
+            applyTheme(defaultVars);
+            saveTheme(defaultVars);
+            closeThemePicker();
+        }
+
+        function showThemePicker() {
+            const grid = document.getElementById('themeGrid');
+            grid.innerHTML = '';
+            themes.forEach(theme => {
+                const card = document.createElement('div');
+                card.className = 'theme-card';
+                const preview = document.createElement('div');
+                preview.className = 'theme-preview';
+                preview.style.background = theme.vars['--body-bg'];
+                const label = document.createElement('div');
+                label.className = 'theme-label';
+                label.textContent = theme.name;
+                card.appendChild(preview);
+                card.appendChild(label);
+                card.onclick = () => {
+                    applyTheme(theme.vars);
+                    saveTheme(theme.vars);
+                    closeThemePicker();
+                };
+                grid.appendChild(card);
+            });
+            document.getElementById('themeModal').classList.add('show');
+        }
+
+        function closeThemePicker() {
+            document.getElementById('themeModal').classList.remove('show');
+        }
+        document.getElementById('themeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeThemePicker();
+        });
+
+        // ============ ЗВУКИ ============
+        let audioCtx = null;
+        function ensureAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', vol = 0.1) {
+            ensureAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
+        function playWin() {
+            ensureAudio();
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.2, 'triangle', 0.12), i * 100);
+            });
+        }
 
         // ============ WebSocket и роли ============
         const params = new URLSearchParams(window.location.search);
@@ -214,64 +496,7 @@
         let hoverCol = -1, hoverSuit = null;
         let moves = 0, win = false;
 
-        // ============ ФОНЫ ============
-        const backgrounds = [
-            { name: 'Исходный', css: 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)' },
-            { name: 'Лес', css: 'radial-gradient(circle at 20% 80%, #2d5016 0%, #0a1a05 100%)' },
-            { name: 'Закат', css: 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)' },
-            { name: 'Океан', css: 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)' },
-            { name: 'Фиолет', css: 'radial-gradient(circle at 30% 70%, #6b2fa0 0%, #150a24 100%)' },
-            { name: 'Золото', css: 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)' },
-            { name: 'Космос', css: 'radial-gradient(circle at 10% 10%, #1a1a2e 0%, #0f0f1a 100%)' },
-            { name: 'Розы', css: 'radial-gradient(circle at 70% 30%, #a04050 0%, #200a10 100%)' }
-        ];
-
-        function setBackground(bgCss) {
-            document.body.style.background = bgCss;
-            document.body.style.backgroundImage = bgCss.includes('gradient') ? bgCss : 'none';
-            localStorage.setItem('solitaire_bg', bgCss);
-        }
-
-        function loadBackground() {
-            const saved = localStorage.getItem('solitaire_bg');
-            if (saved) {
-                document.body.style.background = saved;
-                document.body.style.backgroundImage = saved.includes('gradient') ? saved : 'none';
-            }
-        }
-
-        function resetBackground() {
-            const defaultBg = 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)';
-            setBackground(defaultBg);
-            closeBackgroundPicker();
-        }
-
-        // ============ МОДАЛЬНОЕ ОКНО ФОНА ============
-        function showBackgroundPicker() {
-            const modal = document.getElementById('bgModal');
-            const grid = document.getElementById('bgGrid');
-            grid.innerHTML = '';
-            backgrounds.forEach(bg => {
-                const div = document.createElement('div');
-                div.className = 'bg-option';
-                div.style.background = bg.css;
-                div.title = bg.name;
-                div.onclick = () => { setBackground(bg.css); closeBackgroundPicker(); };
-                grid.appendChild(div);
-            });
-            modal.classList.add('show');
-        }
-
-        function closeBackgroundPicker() {
-            document.getElementById('bgModal').classList.remove('show');
-        }
-
-        // Закрытие по клику вне модалки
-        document.getElementById('bgModal').addEventListener('click', function(e) {
-            if (e.target === this) closeBackgroundPicker();
-        });
-
-        // ============ Генерация рубашки карт ============
+        // Рубашка
         const backPattern = document.createElement('canvas');
         backPattern.width = CARD_W;
         backPattern.height = CARD_H;
@@ -293,7 +518,6 @@
             }
         }
 
-        // ============ КАРТА ============
         class Card {
             constructor(suit, rank, faceUp = false) {
                 this.suit = suit;
@@ -307,23 +531,31 @@
             }
             get value() { return RANKS.indexOf(this.rank); }
             
-            draw(dragX, dragY, isDrag) {
+            draw(dragX, dragY, isDrag, index = 0, total = 1) {
                 const ctx = canvas.getContext('2d');
                 let cx = isDrag ? dragX : this.x;
                 let cy = isDrag ? dragY : this.y;
                 
                 ctx.save();
                 if (isDrag) {
+                    ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                    ctx.shadowBlur = 25;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
                     ctx.globalAlpha = 0.95;
-                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                    ctx.shadowBlur = 24;
+                    const scale = 1.06;
+                    const centerX = cx + CARD_W/2;
+                    const centerY = cy + CARD_H/2;
+                    ctx.translate(centerX, centerY);
+                    ctx.scale(scale, scale);
+                    const offset = total > 1 ? (index - (total-1)/2) * 4 : 0;
+                    ctx.translate(offset, offset * 0.5);
+                    ctx.translate(-centerX, -centerY);
                 }
                 
                 if (this.faceUp) {
-                    // Основа
                     ctx.fillStyle = '#f2ebdc';
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    // Рамки
                     ctx.strokeStyle = '#3b2e26';
                     ctx.lineWidth = 1.4;
                     ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2);
@@ -331,38 +563,37 @@
                     ctx.lineWidth = 0.6;
                     ctx.strokeRect(cx+5, cy+5, CARD_W-10, CARD_H-10);
                     
-                    // Текст ранга и масти (верхний левый)
                     ctx.fillStyle = this.color;
-                    ctx.font = 'bold 26px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.rank, cx + 10, cy + 34);
-                    ctx.font = '20px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.suit, cx + 10, cy + 58);
+                    // Верхний левый угол – отступ 10px
+                    ctx.font = 'bold 18px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.rank, cx + 10, cy + 22);
+                    ctx.font = '14px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, cx + 10, cy + 38);
                     
-                    // Перевёрнутые (нижний правый)
+                    // Перевёрнутые в нижнем правом углу – отступ 15px
                     ctx.save();
-                    ctx.translate(cx + CARD_W - 10, cy + CARD_H - 8);
+                    ctx.translate(cx + CARD_W - 15, cy + CARD_H - 15);
                     ctx.rotate(Math.PI);
-                    ctx.font = 'bold 26px "Georgia", "Times New Roman", serif';
+                    ctx.font = 'bold 18px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.rank, 0, 0);
-                    ctx.font = '20px "Georgia", "Times New Roman", serif';
-                    ctx.fillText(this.suit, 0, 24);
+                    ctx.font = '14px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, 0, 17);
                     ctx.restore();
                     
                     // Центральный символ
                     ctx.globalAlpha = 0.35;
-                    ctx.font = '60px "Georgia", "Times New Roman", serif';
+                    ctx.font = '48px "Georgia", "Times New Roman", serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2);
                     ctx.textAlign = 'start';
                     ctx.globalAlpha = 1.0;
                     
-                    // Медальон для фигурных карт
                     if (['J', 'Q', 'K'].includes(this.rank)) {
                         ctx.beginPath();
-                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 24, 32, 0, 0, Math.PI*2);
+                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 22, 30, 0, 0, Math.PI*2);
                         ctx.strokeStyle = '#d4af37';
-                        ctx.lineWidth = 1.8;
+                        ctx.lineWidth = 1.6;
                         ctx.stroke();
                         ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
                         ctx.fill();
@@ -379,7 +610,20 @@
             }
         }
 
-        // ============ ИНИЦИАЛИЗАЦИЯ ИГРЫ ============
+        function isValidGroup(cards) {
+            if (cards.length === 0) return false;
+            for (let i = 0; i < cards.length; i++) {
+                if (!cards[i].faceUp) return false;
+            }
+            for (let i = 0; i < cards.length - 1; i++) {
+                const cur = cards[i];
+                const next = cards[i+1];
+                if (cur.value !== next.value + 1) return false;
+                if (cur.color === next.color) return false;
+            }
+            return true;
+        }
+
         function init() {
             deck = [];
             stock = [];
@@ -399,7 +643,6 @@
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
-            
             for (let col = 0; col < 7; col++) {
                 for (let row = 0; row <= col; row++) {
                     const card = deck.pop();
@@ -413,9 +656,7 @@
             sendGameState();
         }
 
-        function newGame() {
-            init();
-        }
+        function newGame() { init(); }
 
         function layoutCards() {
             const startX = 12, startY = 10;
@@ -476,7 +717,9 @@
                 ctx.strokeRect(sx, 10, CARD_W, CARD_H);
                 ctx.setLineDash([]);
             }
-            if (waste.length) waste[waste.length-1].draw();
+            if (waste.length && !(isDragging && dragFromWaste && dragCards.length > 0)) {
+                waste[waste.length-1].draw();
+            }
             
             let cx = 12, cy = 150;
             const colSpacing = CARD_W + 9;
@@ -487,9 +730,24 @@
                     ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
                 for (let card of columns[i]) {
-                    card.draw();
+                    if (!dragCards.includes(card)) {
+                        card.draw();
+                    }
                 }
                 cx += colSpacing;
+            }
+            
+            if (isDragging && dragCards.length > 0) {
+                for (let i = 0; i < dragCards.length; i++) {
+                    const card = dragCards[i];
+                    card.draw(
+                        mouseX - dragOffsetX + (i * 2),
+                        mouseY - dragOffsetY + (i * 2),
+                        true,
+                        i,
+                        dragCards.length
+                    );
+                }
             }
             
             ctx.font = '14px Georgia, serif';
@@ -517,6 +775,7 @@
             if (Object.values(foundations).every(arr => arr.length === 13)) {
                 win = true;
                 document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
+                playWin();
             }
         }
 
@@ -553,7 +812,10 @@
             for (let i = 0; i < 7; i++) {
                 for (let j = columns[i].length-1; j >= 0; j--) {
                     if (columns[i][j].faceUp && columns[i][j].contains(mx, my)) {
-                        startDrag(columns[i].slice(j), i, false, mx, my);
+                        const group = columns[i].slice(j);
+                        if (isValidGroup(group)) {
+                            startDrag(group, i, false, mx, my);
+                        }
                         return;
                     }
                 }
@@ -571,6 +833,7 @@
             dragOffsetY = my - cards[0].y;
             mouseX = mx;
             mouseY = my;
+            drawAll();
         }
 
         canvas.onmousemove = (e) => {
@@ -599,6 +862,7 @@
 
         canvas.onmouseup = () => {
             if (!isDragging || isWatcher) return;
+            let placed = false;
             if (hoverSuit && dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
                 foundations[hoverSuit].push(dragCards[0]);
                 if (dragFromWaste) waste.pop();
@@ -606,7 +870,7 @@
                 if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
                     columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                 moves++;
-                checkWin();
+                placed = true;
             } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
                 if (dragFromWaste) columns[hoverCol].push(waste.pop());
                 else {
@@ -616,8 +880,13 @@
                 if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
                     columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                 moves++;
-                checkWin();
+                placed = true;
             }
+            
+            if (placed) {
+                playPlace();
+            }
+            
             isDragging = false;
             dragCards = [];
             dragFromCol = -1;
@@ -626,6 +895,7 @@
             hoverSuit = null;
             layoutCards();
             drawAll();
+            if (placed) checkWin();
             sendGameState();
         };
 
@@ -641,6 +911,7 @@
                         if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
                             columns[i][columns[i].length-1].faceUp = true;
                         moves++;
+                        playPlace();
                         checkWin();
                         layoutCards();
                         drawAll();
@@ -689,6 +960,7 @@
             if (state.win) {
                 win = true;
                 document.getElementById('winMessage').innerHTML = '<div class="win">🏆 Победа!</div>';
+                playWin();
             }
             layoutCards();
             drawAll();
@@ -747,7 +1019,7 @@
         }
 
         function startApp() {
-            loadBackground();
+            loadTheme();
             resize();
             init();
             
