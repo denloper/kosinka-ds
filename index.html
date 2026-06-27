@@ -32,6 +32,7 @@
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         let gameState = null, gameId = null, ws = null, isHost = true;
         let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
+        let mouseX = 0, mouseY = 0;
 
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
@@ -45,7 +46,6 @@
             ws = new WebSocket(WS_URL);
             ws.onopen = () => {
                 document.getElementById('status').textContent = 'Подключено, загрузка игры...';
-                // Если есть gameId в URL и watch=true – зритель, иначе хост
                 if (paramGameId && urlParams.has('watch')) {
                     isHost = false;
                     ws.send(JSON.stringify({ action: 'join', game_id: gameId }));
@@ -122,9 +122,12 @@
                 }
                 for (let i = 0; i < col.length; i++) {
                     const card = col[i];
+                    // Сохраняем реальные координаты для дальнейшего перетаскивания
+                    card.x = cx;
+                    card.y = cy + i * CARD_OVERLAP;
                     // Не рисуем карты, которые сейчас перетаскиваются
                     if (!dragCards.includes(card)) {
-                        drawCard(card, cx, cy + i * CARD_OVERLAP);
+                        drawCard(card, card.x, card.y);
                     }
                 }
                 cx += CARD_W + 9;
@@ -133,7 +136,8 @@
             // Перетаскиваемые карты поверх
             if (drag && dragCards.length) {
                 for (let i = 0; i < dragCards.length; i++) {
-                    drawCard(dragCards[i], mouseX - drag.offsetX + i*2, mouseY - drag.offsetY + i*2);
+                    const card = dragCards[i];
+                    drawCard(card, mouseX - drag.offsetX + i*2, mouseY - drag.offsetY + i*2);
                 }
             }
 
@@ -174,7 +178,6 @@
         }
 
         // ===== Мышь =====
-        let mouseX = 0, mouseY = 0;
         canvas.onmousedown = (e) => {
             if (!gameState || isWatcher) return;
             const rect = canvas.getBoundingClientRect();
@@ -189,7 +192,9 @@
             if (gameState.waste.length) {
                 let wx = stockX+CARD_W+12, wy = 10;
                 if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
-                    startDrag([gameState.waste[0]], -1, true, mx, my);
+                    const card = gameState.waste[0];
+                    card.x = wx; card.y = wy; // сохраняем координаты
+                    startDrag([card], -1, true, mx, my);
                     return;
                 }
             }
@@ -199,10 +204,15 @@
                 const col = gameState.columns[i];
                 for (let j = col.length-1; j >= 0; j--) {
                     const card = col[j];
+                    if (!card.face_up) break;
                     const cardY = cy + j*CARD_OVERLAP;
                     if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
-                        if (!card.face_up) break;
                         const group = col.slice(j);
+                        // убедимся, что координаты правильные
+                        if (group.length) {
+                            group[0].x = cx;
+                            group[0].y = cardY;
+                        }
                         startDrag(group, i, false, mx, my);
                         return;
                     }
@@ -212,16 +222,23 @@
         };
 
         function startDrag(cards, col, waste, mx, my) {
-            drag = { cards, col, waste, offsetX: mx - (cards[0].x || 0), offsetY: my - (cards[0].y || 0) };
+            if (!cards.length) return;
+            const firstCard = cards[0];
+            // Используем сохранённые координаты карты
+            const cardX = firstCard.x || 0;
+            const cardY = firstCard.y || 0;
+            drag = { cards, col, waste, offsetX: mx - cardX, offsetY: my - cardY };
             dragCards = cards; fromCol = col; fromWaste = waste;
             mouseX = mx; mouseY = my;
+            draw();
         }
 
         canvas.onmousemove = (e) => {
+            if (!drag) return;
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
-            if (drag) draw();
+            draw();
         };
 
         canvas.onmouseup = (e) => {
