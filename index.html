@@ -203,12 +203,12 @@
 
 <script>
 // ============ НАСТРОЙКИ ============
-const WS_URL = 'wss://krilidiya.loca.lt';
+const WS_URL = 'wss://krilidiya.loca.lt';   // ваш постоянный поддомен localtunnel
 const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
 const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-// ============ ТЕМЫ (полный набор) ============
+// ============ ТЕМЫ (полный набор, 8 тем) ============
 const themes = [
     {
         name: 'Классика',
@@ -365,8 +365,9 @@ const themes = [
 let cardColors = themes[0].card;
 const dpr = window.devicePixelRatio || 1;
 
-// ============ ПЕРЕМЕННЫЕ ============
-let gameState = null, gameId = null, ws = null, isWatcher = false;
+// ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+let ws = null;
+let gameState = null, gameId = null, isWatcher = false;
 let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
 let mouseX = 0, mouseY = 0;
 
@@ -398,12 +399,18 @@ function playWin() {
     [523, 659, 784, 1047].forEach((f,i) => setTimeout(() => playTone(f, 0.2, 'triangle', 0.12), i*100));
 }
 
-// ============ ПОДКЛЮЧЕНИЕ ============
+// ============ ПОДКЛЮЧЕНИЕ (с обходом страницы localtunnel) ============
 function connect() {
     const urlParams = new URLSearchParams(window.location.search);
     const paramGameId = urlParams.get('game');
     gameId = paramGameId || Math.random().toString(36).substr(2, 6);
     isWatcher = paramGameId && urlParams.has('watch');
+
+    // Отправляем HTTP-запрос с заголовком bypass-tunnel-reminder,
+    // чтобы localtunnel пропустил последующие WebSocket-соединения без страницы подтверждения.
+    fetch(`https://${WS_URL.split('://')[1]}/`, {
+        headers: { 'bypass-tunnel-reminder': 'true' }
+    }).catch(() => {});
 
     ws = new WebSocket(WS_URL);
     ws.onopen = () => {
