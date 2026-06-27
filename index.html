@@ -3,84 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>🃏 Пасьянс Косынка | Discord Activity</title>
+    <title>🃏 Косынка</title>
     <style>
-        :root {
-            --body-bg: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
-            --game-bg: rgba(18, 25, 42, 0.4);
-            --game-border: rgba(212, 175, 55, 0.15);
-            --game-shadow: 0 20px 60px rgba(0,0,0,0.7);
-            --canvas-bg: #111c2f;
-            --canvas-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6);
-            --button-bg: rgba(30, 45, 70, 0.6);
-            --button-border: rgba(212, 175, 55, 0.3);
-            --button-hover-bg: rgba(212, 175, 55, 0.15);
-            --title-color: #ebc25e;
-            --info-color: #8d98b0;
-            --win-color: #ebc25e;
-            --modal-bg: #151e2e;
-            --modal-border: rgba(212, 175, 55, 0.2);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: var(--body-bg);
+            background: #0d111c;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            margin: 0;
             font-family: 'Georgia', 'Times New Roman', serif;
             color: #e0e0e0;
             user-select: none;
-            transition: background 0.6s ease;
+            background-image: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
         }
         #game {
             text-align: center;
-            background: var(--game-bg);
-            backdrop-filter: blur(8px);
+            background: rgba(18, 25, 42, 0.6);
+            backdrop-filter: blur(10px);
             padding: 25px 30px;
             border-radius: 24px;
-            border: 1px solid var(--game-border);
-            box-shadow: var(--game-shadow);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
             width: 95vw;
             max-width: 1120px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: background 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
         }
         h1 {
             margin-bottom: 12px;
             font-size: 32px;
             letter-spacing: 2px;
-            color: var(--title-color);
+            color: #ebc25e;
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
-            transition: color 0.6s ease;
         }
-        #status { margin-bottom: 10px; font-size: 14px; min-height: 20px; }
         canvas {
             border-radius: 16px;
-            background: var(--canvas-bg);
+            background: #111c2f;
             cursor: grab;
-            box-shadow: var(--canvas-shadow);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6);
             border: 1px solid rgba(212, 175, 55, 0.1);
             display: block;
+            margin: 0 auto;
         }
         canvas:active { cursor: grabbing; }
         .info {
-            margin-top: 14px;
+            margin-top: 12px;
             font-size: 14px;
-            color: var(--info-color);
-            letter-spacing: 0.5px;
-            transition: color 0.6s ease;
+            color: #8d98b0;
         }
-        .win {
-            color: var(--win-color);
+        .win-message {
+            color: #ebc25e;
             font-size: 26px;
             font-weight: bold;
-            margin-top: 12px;
+            margin-top: 10px;
             animation: pulse 1.5s infinite;
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
         }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .btn-row {
@@ -93,496 +68,429 @@
         button {
             padding: 14px 32px;
             color: #e0e0e0;
-            background: var(--button-bg);
-            border: 1px solid var(--button-border);
+            background: rgba(30, 45, 70, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.3);
             border-radius: 12px;
             cursor: pointer;
             font-size: 15px;
             font-weight: bold;
-            font-family: 'Georgia', 'Times New Roman', serif;
+            font-family: inherit;
             transition: all 0.3s ease;
             backdrop-filter: blur(4px);
             letter-spacing: 1px;
         }
         button:hover {
-            transform: translateY(-3px);
-            background: var(--button-hover-bg);
-            border-color: var(--title-color);
+            transform: translateY(-2px);
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #ebc25e;
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
         }
         .btn-new { color: #e6c86a; }
-        .btn-spectate { color: #b0bce6; }
-        .btn-share { color: #9aaec2; }
-        .btn-theme { color: #c0a0b0; }
-        .btn-hint { color: #f0d060; }
         .btn-undo { color: #a0c0f0; }
-        .hidden { display: none !important; }
-
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: var(--modal-bg); border: 1px solid var(--modal-border); border-radius: 20px;
-            padding: 25px; max-width: 480px; width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8); max-height: 80vh; overflow-y: auto;
-        }
-        .modal h3 { margin-bottom: 15px; color: var(--title-color); font-size: 20px; }
-        .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
-        .theme-card {
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            cursor: pointer; padding: 8px; border-radius: 14px; border: 2px solid transparent;
-            background: rgba(255,255,255,0.02); transition: 0.2s;
-        }
-        .theme-card:hover { border-color: var(--title-color); background: rgba(255,255,255,0.05); }
-        .theme-preview { width: 100%; aspect-ratio: 1; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .theme-label { font-size: 11px; color: var(--info-color); text-align: center; }
-        .close-btn {
-            margin-top: 10px; padding: 12px 24px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #b0bce6;
-            cursor: pointer; font-size: 15px; font-family: inherit; transition: 0.3s;
-        }
-        .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
-        .reset-btn {
-            background: transparent; border: 1px dashed rgba(255,255,255,0.3);
-            margin-top: 8px; width: 100%; padding: 10px; font-size: 14px; color: #b0bce6; cursor: pointer;
-        }
-        #gameList { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-        .game-item {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between;
-            align-items: center; cursor: pointer; transition: background 0.2s;
-        }
-        .game-item:hover { background: rgba(255,255,255,0.1); }
-        .game-id { font-family: monospace; color: var(--title-color); font-weight: bold; }
-        #manualJoin { margin-top: 8px; display: flex; gap: 8px; }
-        #manualJoin input {
-            flex: 1; padding: 8px 12px; border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px;
-        }
     </style>
 </head>
 <body>
 <div id="game">
-    <h1>🕯 Пасьянс Косынка</h1>
-    <div id="status">Подключение...</div>
+    <h1>🕯 Косынка</h1>
     <canvas id="canvas"></canvas>
     <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
     <div id="winMessage"></div>
     <div class="btn-row">
-        <button class="btn-new" id="btnNewGame" onclick="sendAction('new_game')">🔄 Новая игра</button>
-        <button class="btn-spectate" id="btnWatch" onclick="openWatchModal()">👁 Смотреть игру</button>
-        <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
-        <button class="btn-hint" id="btnHint" onclick="sendAction('hint')">💡 Подсказка</button>
-        <button class="btn-undo" id="btnUndo" onclick="sendAction('undo')">↩ Отмена</button>
-        <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
-    </div>
-</div>
-
-<div class="modal" id="themeModal">
-    <div class="modal-content">
-        <h3>🎨 Выберите тему</h3>
-        <div class="theme-grid" id="themeGrid"></div>
-        <button class="reset-btn" onclick="resetTheme()">↩ Стандартная тема</button>
-        <button class="close-btn" onclick="closeThemePicker()">✕ Закрыть</button>
-    </div>
-</div>
-
-<div class="modal" id="watchModal">
-    <div class="modal-content">
-        <h3>👁 Выберите игру для наблюдения</h3>
-        <div id="gameList">Поиск активных игр...</div>
-        <div id="manualJoin">
-            <input type="text" id="manualGameId" placeholder="Введите ID игры">
-            <button onclick="joinManualGame()">▶ Смотреть</button>
-        </div>
-        <button class="close-btn" onclick="closeWatchModal()">✕ Закрыть</button>
+        <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
+        <button class="btn-undo" onclick="undoMove()">↩ Отмена</button>
     </div>
 </div>
 
 <script>
-// ============ НАСТРОЙКИ ============
-const WS_URL = 'wss://denloper.loca.lt';   // ваш постоянный поддомен localtunnel
-const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
-const SUITS = ['♠', '♥', '♦', '♣'];
-const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    const CARD_W = 95, CARD_H = 115, CARD_OVERLAP = 28;
+    const SUITS = ['♠', '♥', '♦', '♣'];
+    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-// ============ ТЕМЫ (полный набор, 8 тем) ============
-const themes = [
-    {
-        name: 'Классика',
-        vars: {
-            '--body-bg': 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)',
-            '--game-bg': 'rgba(18, 25, 42, 0.4)',
-            '--game-border': 'rgba(212, 175, 55, 0.15)',
-            '--game-shadow': '0 20px 60px rgba(0,0,0,0.7)',
-            '--canvas-bg': '#111c2f',
-            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6)',
-            '--button-bg': 'rgba(30, 45, 70, 0.6)',
-            '--button-border': 'rgba(212, 175, 55, 0.3)',
-            '--button-hover-bg': 'rgba(212, 175, 55, 0.15)',
-            '--title-color': '#ebc25e',
-            '--info-color': '#8d98b0',
-            '--win-color': '#ebc25e',
-            '--modal-bg': '#151e2e',
-            '--modal-border': 'rgba(212, 175, 55, 0.2)'
-        },
-        card: {
-            faceBg: '#f2ebdc', frameOuter: '#3b2e26', frameInner: '#5d4a3c',
-            redText: '#8b302a', blackText: '#382e26', backColor: '#0f1e36',
-            backBorder: '#ebc25e', backPattern: '#d4af37'
-        }
-    },
-    // ... остальные 7 тем (вставьте их сюда полностью, они не изменились)
-];
+    let stock, waste, foundations, columns;
+    let moves = 0, win = false;
+    let dragCards = [], dragFromCol = -1, dragFromWaste = false;
+    let dragOffsetX = 0, dragOffsetY = 0, mouseX = 0, mouseY = 0;
+    let isDragging = false;
+    let history = [];
 
-let cardColors = themes[0].card;
-const dpr = window.devicePixelRatio || 1;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-// ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
-let ws = null;
-let gameState = null, gameId = null, isWatcher = false;
-let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
-let mouseX = 0, mouseY = 0;
-
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-
-// ============ ЗВУКИ ============
-let audioCtx = null;
-function ensureAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-function playTone(freq, duration, type = 'sine', vol = 0.1) {
-    ensureAudio();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-}
-function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
-function playWin() {
-    ensureAudio();
-    [523, 659, 784, 1047].forEach((f,i) => setTimeout(() => playTone(f, 0.2, 'triangle', 0.12), i*100));
-}
-
-// ============ ПОДКЛЮЧЕНИЕ (с обходом страницы localtunnel) ============
-function connect() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramGameId = urlParams.get('game');
-    gameId = paramGameId || Math.random().toString(36).substr(2, 6);
-    isWatcher = paramGameId && urlParams.has('watch');
-
-    // Отправляем HTTP-запрос с заголовком bypass-tunnel-reminder,
-    // чтобы localtunnel пропустил последующие WebSocket-соединения без страницы подтверждения.
-    fetch(`https://${WS_URL.split('://')[1]}/`, {
-        headers: { 'bypass-tunnel-reminder': 'true' }
-    }).catch(() => {});
-
-    ws = new WebSocket(WS_URL);
-    ws.onopen = () => {
-        document.getElementById('status').textContent = 'Подключено, загрузка игры...';
-        if (isWatcher) {
-            ws.send(JSON.stringify({ action: 'join', game_id: gameId }));
-        } else {
-            ws.send(JSON.stringify({ action: 'create', game_id: gameId }));
-        }
-    };
-    ws.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.type === 'ping') return;
-        if (data.type === 'state') {
-            gameState = data.state;
-            document.getElementById('status').textContent = 'Игра загружена';
-            draw();
-            if (data.state.win) playWin();
-        } else if (data.type === 'error') {
-            document.getElementById('status').textContent = 'Ошибка: ' + data.message;
-        } else if (data.type === 'hint') {
-            alert(data.hint ? `Подсказка: переместите карту(ы) из ${JSON.stringify(data.hint.from)} в ${JSON.stringify(data.hint.to)}` : 'Нет доступных ходов');
-        }
-    };
-    ws.onclose = () => {
-        document.getElementById('status').textContent = 'Соединение закрыто, переподключение...';
-        setTimeout(connect, 3000);
-    };
-    ws.onerror = () => document.getElementById('status').textContent = 'Ошибка подключения к серверу';
-}
-
-function sendAction(action, payload = {}) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send(JSON.stringify({ action, ...payload }));
-}
-
-// ============ ОТРИСОВКА ============
-let backPattern = document.createElement('canvas');
-function generateBackPattern() {
-    backPattern.width = CARD_W * dpr;
-    backPattern.height = CARD_H * dpr;
-    const bctx = backPattern.getContext('2d');
-    bctx.scale(dpr, dpr);
-    bctx.fillStyle = cardColors.backColor;
-    bctx.fillRect(0, 0, CARD_W, CARD_H);
-    bctx.strokeStyle = cardColors.backBorder;
-    bctx.lineWidth = 1.8;
-    bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
-    bctx.fillStyle = cardColors.backPattern;
-    const sp = 22, ox = (CARD_W % sp)/2, oy = (CARD_H % sp)/2;
-    for (let x = ox+sp/2; x < CARD_W-ox; x += sp)
-        for (let y = oy+sp/2; y < CARD_H-oy; y += sp) {
-            bctx.beginPath(); bctx.arc(x, y, 3.5, 0, Math.PI*2); bctx.fill();
-        }
-    bctx.setTransform(1,0,0,1,0,0);
-}
-generateBackPattern();
-
-function draw() {
-    if (!gameState) return;
-    canvas.width = Math.min(1100, window.innerWidth-20);
-    canvas.height = Math.min(700, window.innerHeight-100);
-    canvas.style.width = canvas.width + 'px';
-    canvas.style.height = canvas.height + 'px';
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Фонды
-    let x = 20, y = 10;
-    for (let s of SUITS) {
-        const f = gameState.foundations[s];
-        ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
-        ctx.strokeRect(x, y, CARD_W, CARD_H); ctx.setLineDash([]);
-        if (f.length) drawCard(f[0], x, y);
-        x += CARD_W + 6;
+    let audioCtx = null;
+    function ensureAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    // Сток и отвал
-    let stockX = 20 + 4*(CARD_W+6) + 20;
-    ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
-    ctx.strokeRect(stockX, 10, CARD_W, CARD_H); ctx.setLineDash([]);
-    if (gameState.stock_count > 0) drawCardBack(stockX, 10);
-    if (gameState.waste.length) drawCard(gameState.waste[0], stockX + CARD_W + 12, 10);
-
-    // Столбцы
-    let cx = 20, cy = 150;
-    for (let col of gameState.columns) {
-        if (col.length === 0) {
-            ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
-            ctx.strokeRect(cx, cy, CARD_W, CARD_H); ctx.setLineDash([]);
-        }
-        for (let i = 0; i < col.length; i++) {
-            const card = col[i];
-            card.x = cx; card.y = cy + i*CARD_OVERLAP;
-            if (!dragCards.includes(card)) drawCard(card, card.x, card.y);
-        }
-        cx += CARD_W + 9;
+    function playPlaceSound() {
+        ensureAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
     }
-    // Перетаскиваемые карты
-    if (drag && dragCards.length) {
-        for (let i = 0; i < dragCards.length; i++) {
-            drawCard(dragCards[i], mouseX - drag.offsetX + i*2, mouseY - drag.offsetY + i*2);
-        }
-    }
-    ctx.font = '14px Georgia'; ctx.fillStyle = '#ddd';
-    ctx.fillText(`Ходов: ${gameState.moves}`, canvas.width-100, canvas.height-10);
-}
-
-function drawCard(card, x, y) {
-    if (!card.face_up) return drawCardBack(x, y);
-    ctx.fillStyle = cardColors.faceBg;
-    ctx.fillRect(x, y, CARD_W, CARD_H);
-    ctx.strokeStyle = cardColors.frameOuter; ctx.lineWidth = 1.4;
-    ctx.strokeRect(x+1, y+1, CARD_W-2, CARD_H-2);
-    ctx.strokeStyle = cardColors.frameInner; ctx.lineWidth = 0.6;
-    ctx.strokeRect(x+5, y+5, CARD_W-10, CARD_H-10);
-    ctx.fillStyle = (card.suit==='♥'||card.suit==='♦') ? cardColors.redText : cardColors.blackText;
-    ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, x+12, y+22);
-    ctx.font = '14px Georgia'; ctx.fillText(card.suit, x+12, y+38);
-    ctx.save(); ctx.translate(x+CARD_W-18, y+CARD_H-18); ctx.rotate(Math.PI);
-    ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, 0, 0);
-    ctx.font = '14px Georgia'; ctx.fillText(card.suit, 0, 17);
-    ctx.restore();
-    ctx.globalAlpha = 0.35; ctx.font = '48px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(card.suit, x+CARD_W/2, y+CARD_H/2);
-    ctx.textAlign = 'start'; ctx.globalAlpha = 1;
-    if (['J','Q','K'].includes(card.rank)) {
-        ctx.beginPath(); ctx.ellipse(x+CARD_W/2, y+CARD_H/2, 22, 30, 0, 0, Math.PI*2);
-        ctx.strokeStyle = cardColors.backBorder; ctx.lineWidth = 1.6; ctx.stroke();
-        ctx.fillStyle = cardColors.backPattern.replace(')', ', 0.1)').replace('rgba','rgba'); ctx.fill();
-    }
-}
-
-function drawCardBack(x, y) {
-    ctx.fillStyle = cardColors.backColor;
-    ctx.fillRect(x, y, CARD_W, CARD_H);
-    ctx.strokeStyle = cardColors.backBorder; ctx.lineWidth = 1.8;
-    ctx.strokeRect(x+4, y+4, CARD_W-8, CARD_H-8);
-    ctx.fillStyle = cardColors.backPattern;
-    const sp = 22, ox = (CARD_W % sp)/2, oy = (CARD_H % sp)/2;
-    for (let i = ox+sp/2; i < CARD_W-ox; i += sp)
-        for (let j = oy+sp/2; j < CARD_H-oy; j += sp) {
-            ctx.beginPath(); ctx.arc(x+i, y+j, 3.5, 0, Math.PI*2); ctx.fill();
-        }
-}
-
-// ============ УПРАВЛЕНИЕ МЫШЬЮ ============
-canvas.addEventListener('mousedown', (e) => {
-    if (!gameState || isWatcher) return;
-    const mx = e.offsetX, my = e.offsetY;
-    let stockX = 20 + 4*(CARD_W+6) + 20;
-    if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
-        sendAction('click_stock'); return;
-    }
-    if (gameState.waste.length) {
-        let wx = stockX+CARD_W+12, wy = 10;
-        if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
-            const card = gameState.waste[0]; card.x = wx; card.y = wy;
-            startDrag([card], -1, true, mx, my); return;
-        }
-    }
-    let cx = 20, cy = 150;
-    for (let i = 0; i < gameState.columns.length; i++) {
-        const col = gameState.columns[i];
-        for (let j = col.length-1; j >= 0; j--) {
-            const card = col[j];
-            if (!card.face_up) break;
-            const cardY = cy + j*CARD_OVERLAP;
-            if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
-                const group = col.slice(j);
-                if (group.length) { group[0].x = cx; group[0].y = cardY; }
-                startDrag(group, i, false, mx, my); return;
-            }
-        }
-        cx += CARD_W + 9;
-    }
-});
-
-function startDrag(cards, col, waste, mx, my) {
-    drag = { cards, col, waste, offsetX: mx - cards[0].x, offsetY: my - cards[0].y };
-    dragCards = cards; fromCol = col; fromWaste = waste;
-    mouseX = mx; mouseY = my;
-    draw();
-}
-
-canvas.addEventListener('mousemove', (e) => {
-    if (!drag) return;
-    mouseX = e.offsetX; mouseY = e.offsetY;
-    draw();
-});
-
-canvas.addEventListener('mouseup', (e) => {
-    if (!drag) return;
-    const mx = e.offsetX, my = e.offsetY;
-    let targetType = null, targetIndex = null, targetSuit = null;
-    let fx = 20, fy = 10;
-    for (let s of SUITS) {
-        if (mx >= fx && mx <= fx+CARD_W && my >= fy && my <= fy+CARD_H) { targetType = 'foundation'; targetSuit = s; break; }
-        fx += CARD_W + 6;
-    }
-    if (!targetType) {
-        let cx = 20, cy = 150;
-        for (let i = 0; i < 7; i++) {
-            if (mx >= cx && mx <= cx+CARD_W && my >= cy) { targetType = 'column'; targetIndex = i; break; }
-            cx += CARD_W + 9;
-        }
-    }
-    if (targetType) {
-        sendAction('move', {
-            from: fromWaste ? { type: 'waste' } : { type: 'column', index: fromCol },
-            card_count: dragCards.length,
-            to: targetType === 'foundation' ? { type: 'foundation', suit: targetSuit } : { type: 'column', index: targetIndex }
+    function playWinSound() {
+        ensureAudio();
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+            setTimeout(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }, i * 100);
         });
-        playPlace();
     }
-    drag = null; dragCards = [];
-    draw();
-});
 
-canvas.addEventListener('dblclick', (e) => {
-    if (!gameState || isWatcher) return;
-    const mx = e.offsetX, my = e.offsetY;
-    let cx = 20, cy = 150;
-    for (let i = 0; i < gameState.columns.length; i++) {
-        const col = gameState.columns[i];
-        if (col.length) {
-            const card = col[col.length-1];
-            const cardY = cy + (col.length-1)*CARD_OVERLAP;
-            if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
-                sendAction('auto_move', { from: { type: 'column', index: i } }); return;
+    class Card {
+        constructor(suit, rank, faceUp = false) {
+            this.suit = suit;
+            this.rank = rank;
+            this.faceUp = faceUp;
+            this.x = 0; this.y = 0;
+        }
+        get color() { return (this.suit === '♥' || this.suit === '♦') ? '#8b302a' : '#382e26'; }
+        get value() { return RANKS.indexOf(this.rank); }
+        draw(dx, dy, isDrag, index = 0, total = 1) {
+            const x = isDrag ? dx : this.x;
+            const y = isDrag ? dy : this.y;
+            ctx.save();
+            if (isDrag) {
+                ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                ctx.globalAlpha = 0.95;
+                const scale = 1.05;
+                const centerX = x + CARD_W/2, centerY = y + CARD_H/2;
+                ctx.translate(centerX, centerY);
+                ctx.scale(scale, scale);
+                const offset = total > 1 ? (index - (total-1)/2) * 4 : 0;
+                ctx.translate(offset, offset * 0.5);
+                ctx.translate(-centerX, -centerY);
+            }
+            if (this.faceUp) {
+                ctx.fillStyle = '#f2ebdc';
+                ctx.fillRect(x, y, CARD_W, CARD_H);
+                ctx.strokeStyle = '#3b2e26';
+                ctx.lineWidth = 1.3;
+                ctx.strokeRect(x+1, y+1, CARD_W-2, CARD_H-2);
+                ctx.strokeStyle = '#5d4a3c';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x+5, y+5, CARD_W-10, CARD_H-10);
+                ctx.fillStyle = this.color;
+                ctx.font = 'bold 17px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.rank, x+13, y+22);
+                ctx.font = '13px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.suit, x+13, y+37);
+                ctx.save();
+                ctx.translate(x+CARD_W-15, y+CARD_H-15);
+                ctx.rotate(Math.PI);
+                ctx.font = 'bold 17px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.rank, 0, 0);
+                ctx.font = '13px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.suit, 0, 15);
+                ctx.restore();
+                ctx.globalAlpha = 0.25;
+                ctx.font = '44px "Georgia", "Times New Roman", serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.suit, x+CARD_W/2, y+CARD_H/2);
+                ctx.textAlign = 'start';
+                ctx.globalAlpha = 1.0;
+                if (['J','Q','K'].includes(this.rank)) {
+                    ctx.beginPath();
+                    ctx.ellipse(x+CARD_W/2, y+CARD_H/2, 20, 28, 0, 0, Math.PI*2);
+                    ctx.strokeStyle = '#d4af37';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(212, 175, 55, 0.08)';
+                    ctx.fill();
+                }
+            } else {
+                ctx.fillStyle = '#0f1e36';
+                ctx.fillRect(x, y, CARD_W, CARD_H);
+                ctx.strokeStyle = '#ebc25e';
+                ctx.lineWidth = 1.8;
+                ctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+                ctx.fillStyle = '#d4af37';
+                const sp = 21, ox = (CARD_W%sp)/2, oy = (CARD_H%sp)/2;
+                for (let i = ox+sp/2; i < CARD_W-ox; i += sp)
+                    for (let j = oy+sp/2; j < CARD_H-oy; j += sp) {
+                        ctx.beginPath();
+                        ctx.arc(x+i, y+j, 3.2, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+            }
+            ctx.restore();
+        }
+        contains(mx, my) {
+            return mx >= this.x && mx <= this.x + CARD_W && my >= this.y && my <= this.y + CARD_H;
+        }
+    }
+
+    function newGame() {
+        let deck = [];
+        for (let s of SUITS) for (let r of RANKS) deck.push(new Card(s, r));
+        for (let i = deck.length-1; i>0; i--) {
+            const j = Math.floor(Math.random()*(i+1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        stock = deck;
+        waste = [];
+        foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
+        columns = [[],[],[],[],[],[],[]];
+        for (let col=0; col<7; col++)
+            for (let row=0; row<=col; row++) {
+                let c = deck.pop();
+                c.faceUp = (row === col);
+                columns[col].push(c);
+            }
+        moves = 0; win = false; history = [];
+        document.getElementById('winMessage').innerHTML = '';
+        layoutCards(); draw();
+    }
+
+    function layoutCards() {
+        let x = 20, y = 10;
+        for (let s of SUITS) {
+            if (foundations[s].length) {
+                let c = foundations[s][foundations[s].length-1];
+                c.x = x; c.y = y;
+            }
+            x += CARD_W + 6;
+        }
+        let stockX = x + 20;
+        if (stock.length) { stock[stock.length-1].x = stockX; stock[stock.length-1].y = y; }
+        if (waste.length) { waste[waste.length-1].x = stockX + CARD_W + 12; waste[waste.length-1].y = y; }
+        let cx = 20, cy = 150;
+        for (let col of columns) {
+            for (let i = 0; i < col.length; i++) {
+                col[i].x = cx;
+                col[i].y = cy + i * CARD_OVERLAP;
+            }
+            cx += CARD_W + 8;
+        }
+    }
+
+    function draw() {
+        canvas.width = Math.min(1100, window.innerWidth-20);
+        canvas.height = Math.min(700, window.innerHeight-100);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let x = 20, y = 10;
+        for (let s of SUITS) {
+            if (foundations[s].length)
+                foundations[s][foundations[s].length-1].draw();
+            else {
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6,6]); ctx.strokeRect(x,y,CARD_W,CARD_H); ctx.setLineDash([]);
+            }
+            x += CARD_W + 6;
+        }
+        let stockX = x + 20;
+        if (stock.length) stock[stock.length-1].draw();
+        else { ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([6,6]); ctx.strokeRect(stockX,10,CARD_W,CARD_H); ctx.setLineDash([]); }
+        if (waste.length) waste[waste.length-1].draw();
+
+        let cx = 20, cy = 150;
+        for (let i = 0; i < columns.length; i++) {
+            for (let card of columns[i]) {
+                if (!dragCards.includes(card)) card.draw();
+            }
+            cx += CARD_W + 8;
+        }
+        if (isDragging && dragCards.length) {
+            for (let i = 0; i < dragCards.length; i++)
+                dragCards[i].draw(mouseX - dragOffsetX + i*2, mouseY - dragOffsetY + i*2, true, i, dragCards.length);
+        }
+        ctx.font = '14px Georgia'; ctx.fillStyle = '#8d98b0';
+        ctx.fillText(`Ходов: ${moves}`, canvas.width-90, canvas.height-10);
+    }
+
+    function canPlaceOnFoundation(card) {
+        const arr = foundations[card.suit];
+        if (!arr.length) return card.rank === 'A';
+        const top = arr[arr.length-1];
+        return RANKS.indexOf(card.rank) === RANKS.indexOf(top.rank) + 1;
+    }
+    function canPlaceOnColumn(card, column) {
+        if (!column.length) return card.rank === 'K';
+        const top = column[column.length-1];
+        const cardRed = card.suit==='♥'||card.suit==='♦';
+        const topRed = top.suit==='♥'||top.suit==='♦';
+        return (cardRed !== topRed) && (top.value === card.value + 1);
+    }
+    function isValidGroup(cards) {
+        for (let i=0; i<cards.length-1; i++) {
+            const cur = cards[i], nxt = cards[i+1];
+            if (!cur.faceUp) return false;
+            const curRed = cur.suit==='♥'||cur.suit==='♦';
+            const nxtRed = nxt.suit==='♥'||nxt.suit==='♦';
+            if (curRed === nxtRed || cur.value !== nxt.value + 1) return false;
+        }
+        return true;
+    }
+
+    function saveHistory() {
+        history.push({
+            stock: stock.slice(), waste: waste.slice(),
+            foundations: JSON.parse(JSON.stringify(foundations)),
+            columns: columns.map(c => c.map(card => Object.assign(new Card(card.suit, card.rank, card.faceUp), {x: card.x, y: card.y}))),
+            moves: moves, win: win
+        });
+    }
+    function undoMove() {
+        if (!history.length) return;
+        const state = history.pop();
+        stock = state.stock; waste = state.waste;
+        foundations = state.foundations; columns = state.columns;
+        moves = state.moves; win = state.win;
+        document.getElementById('winMessage').innerHTML = win ? '<div class="win-message">🏆 Победа!</div>' : '';
+        layoutCards(); draw();
+    }
+    function checkWin() {
+        if (Object.values(foundations).every(a => a.length === 13)) {
+            win = true;
+            document.getElementById('winMessage').innerHTML = '<div class="win-message">🏆 Победа!</div>';
+            playWinSound();
+        }
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (win) return;
+        const mx = e.offsetX, my = e.offsetY;
+        let stockX = 20 + 4*(CARD_W+6) + 20;
+        if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
+            saveHistory();
+            if (stock.length) { let c=stock.pop(); c.faceUp=true; waste.push(c); }
+            else while (waste.length) { let c=waste.pop(); c.faceUp=false; stock.push(c); }
+            moves++; layoutCards(); draw(); return;
+        }
+        if (waste.length) {
+            let wx = stockX+CARD_W+12, wy = 10;
+            if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
+                startDrag([waste[waste.length-1]], -1, true, mx, my);
+                return;
             }
         }
-        cx += CARD_W + 9;
-    }
-    let stockX = 20 + 4*(CARD_W+6) + 20;
-    let wx = stockX+CARD_W+12, wy = 10;
-    if (gameState.waste.length && mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
-        sendAction('auto_move', { from: { type: 'waste' } });
-    }
-});
-
-// ============ ТЕМЫ ============
-function applyTheme(t) {
-    const root = document.documentElement;
-    Object.entries(t.vars).forEach(([k,v]) => root.style.setProperty(k,v));
-    cardColors = { ...t.card };
-    generateBackPattern();
-    draw();
-}
-function loadTheme() {
-    const saved = localStorage.getItem('solitaire_theme');
-    if (saved) { const i = parseInt(saved); if (i>=0 && i<themes.length) { applyTheme(themes[i]); return; } }
-    applyTheme(themes[0]);
-}
-function saveThemeIndex(i) { localStorage.setItem('solitaire_theme', i); }
-function resetTheme() { applyTheme(themes[0]); saveThemeIndex(0); closeThemePicker(); }
-function showThemePicker() {
-    const grid = document.getElementById('themeGrid'); grid.innerHTML = '';
-    themes.forEach((t,i) => {
-        const d = document.createElement('div'); d.className = 'theme-card';
-        d.innerHTML = `<div class="theme-preview" style="background:${t.vars['--body-bg']}"></div><div class="theme-label">${t.name}</div>`;
-        d.onclick = () => { applyTheme(t); saveThemeIndex(i); closeThemePicker(); };
-        grid.appendChild(d);
-    });
-    document.getElementById('themeModal').classList.add('show');
-}
-function closeThemePicker() { document.getElementById('themeModal').classList.remove('show'); }
-document.getElementById('themeModal').addEventListener('click', (e) => { if (e.target === document.getElementById('themeModal')) closeThemePicker(); });
-
-// ============ МОДАЛЬНОЕ ОКНО НАБЛЮДЕНИЯ ============
-let watchListWs = null;
-function openWatchModal() {
-    document.getElementById('watchModal').classList.add('show');
-    document.getElementById('gameList').innerHTML = 'Поиск активных игр...';
-    if (watchListWs) { watchListWs.close(); watchListWs = null; }
-    watchListWs = new WebSocket(WS_URL);
-    watchListWs.onopen = () => watchListWs.send(JSON.stringify({ action: 'list' }));
-    watchListWs.onmessage = (e) => {
-        try {
-            const d = JSON.parse(e.data);
-            if (d.type === 'game_list') {
-                const games = d.games || [];
-                const listDiv = document.getElementById('gameList');
-                if (!games.length) listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр.</p>';
-                else if (games.length === 1) { closeWatchModal(); window.location.href = `?game=${games[0].id}&watch=true`; }
-                else listDiv.innerHTML = games.map(g => `<div class="game-item" onclick="watchGameById('${g.id}')"><span>Игра <span class="game-id">${g.id}</span></span><span style="font-size:12px;color:#8d98b0;">👁 ${g.spectators||0}</span></div>`).join('');
+        let cx = 20, cy = 150;
+        for (let i = 0; i < columns.length; i++) {
+            for (let j = columns[i].length-1; j >= 0; j--) {
+                const card = columns[i][j];
+                if (!card.faceUp) break;
+                const cardY = cy + j*CARD_OVERLAP;
+                if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                    const group = columns[i].slice(j);
+                    if (isValidGroup(group)) startDrag(group, i, false, mx, my);
+                    return;
+                }
             }
-        } catch { document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список не загружен.</p>'; }
-    };
-}
-function closeWatchModal() { document.getElementById('watchModal').classList.remove('show'); if (watchListWs) watchListWs.close(); }
-function watchGameById(id) { closeWatchModal(); window.location.href = `?game=${id}&watch=true`; }
-function joinManualGame() { const id = document.getElementById('manualGameId').value.trim(); if (id) watchGameById(id); }
-document.getElementById('watchModal').addEventListener('click', (e) => { if (e.target === document.getElementById('watchModal')) closeWatchModal(); });
-function shareGame() { if (gameId) navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!')); else alert('Создайте игру через /solitaire'); }
+            cx += CARD_W + 8;
+        }
+    });
 
-// ============ СТАРТ ============
-loadTheme();
-connect();
+    canvas.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        mouseX = e.offsetX; mouseY = e.offsetY;
+        draw();
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        const mx = e.offsetX, my = e.offsetY;
+        let placed = false;
+        let fx = 20, fy = 10;
+        for (let s of SUITS) {
+            if (mx >= fx && mx <= fx+CARD_W && my >= fy && my <= fy+CARD_H) {
+                if (dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
+                    saveHistory();
+                    foundations[s].push(dragCards[0]);
+                    if (dragFromWaste) waste.pop();
+                    else columns[dragFromCol].pop();
+                    if (!dragFromWaste && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                        columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                    moves++; placed = true; playPlaceSound();
+                }
+                break;
+            }
+            fx += CARD_W + 6;
+        }
+        if (!placed) {
+            let cx = 20, cy = 150;
+            for (let i = 0; i < 7; i++) {
+                if (mx >= cx && mx <= cx+CARD_W && my >= cy) {
+                    if (canPlaceOnColumn(dragCards[0], columns[i])) {
+                        saveHistory();
+                        if (dragFromWaste) columns[i].push(waste.pop());
+                        else {
+                            const moved = columns[dragFromCol].splice(columns[dragFromCol].length - dragCards.length);
+                            columns[i].push(...moved);
+                        }
+                        if (!dragFromWaste && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                            columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                        moves++; placed = true; playPlaceSound();
+                    }
+                    break;
+                }
+                cx += CARD_W + 8;
+            }
+        }
+        dragCards = []; dragFromCol = -1; dragFromWaste = false;
+        layoutCards(); draw();
+        if (placed) checkWin();
+    });
+
+    canvas.addEventListener('dblclick', (e) => {
+        if (win) return;
+        const mx = e.offsetX, my = e.offsetY;
+        let cx = 20, cy = 150;
+        for (let i = 0; i < columns.length; i++) {
+            if (columns[i].length) {
+                const card = columns[i][columns[i].length-1];
+                const cardY = cy + (columns[i].length-1)*CARD_OVERLAP;
+                if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                    if (canPlaceOnFoundation(card)) {
+                        saveHistory();
+                        foundations[card.suit].push(columns[i].pop());
+                        if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
+                            columns[i][columns[i].length-1].faceUp = true;
+                        moves++; playPlaceSound();
+                        checkWin(); layoutCards(); draw();
+                    }
+                    return;
+                }
+            }
+            cx += CARD_W + 8;
+        }
+    });
+
+    function startDrag(cards, col, waste, mx, my) {
+        dragCards = cards;
+        dragFromCol = col;
+        dragFromWaste = waste;
+        dragOffsetX = mx - cards[0].x;
+        dragOffsetY = my - cards[0].y;
+        mouseX = mx; mouseY = my;
+        isDragging = true;
+        draw();
+    }
+
+    window.addEventListener('resize', () => { layoutCards(); draw(); });
+    newGame();
 </script>
 </body>
 </html>
