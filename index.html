@@ -5,62 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🃏 Пасьянс Косынка</title>
     <style>
+        /* 🌙 Глобальные стили под атмосферу фото */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body { 
-            background: #2d1b69;
+            background: #0d111c; 
             display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; font-family: 'Segoe UI', Arial, sans-serif;
-            color: white; user-select: none;
+            min-height: 100vh; 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            color: #e0e0e0; user-select: none;
+            background-image: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
         }
+
         #game { 
             text-align: center; 
-            background: rgba(0,0,0,0.3); 
-            padding: 20px;
-            border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1);
-            width: 95vw; max-width: 1100px;
+            background: rgba(18, 25, 42, 0.4); 
+            backdrop-filter: blur(8px);
+            padding: 25px 30px;
+            border-radius: 24px; 
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            width: 95vw; max-width: 1120px;
         }
+
         h1 { 
-            margin-bottom: 8px; font-size: 28px;
-            background: linear-gradient(45deg, #f1c40f, #e67e22);
-            background-clip: text; -webkit-background-clip: text; color: transparent;
+            margin-bottom: 12px; 
+            font-size: 32px;
+            letter-spacing: 2px;
+            color: #ebc25e; 
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            background: none;
         }
+
+        /* 🎨 Игровое поле (холст) */
         canvas { 
-            border-radius: 12px; background: #076324;
-            cursor: grab; box-shadow: 0 8px 32px rgba(0,0,0,0.5); width: 100%;
+            border-radius: 16px; 
+            background: #111c2f; 
+            cursor: grab; 
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0,0,0,0.6); 
+            width: 100%; 
+            border: 1px solid rgba(212, 175, 55, 0.1);
         }
         canvas:active { cursor: grabbing; }
-        .info { margin-top: 10px; font-size: 14px; color: #aaa; }
-        .win { color: #f1c40f; font-size: 24px; font-weight: bold; margin-top: 12px; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-        .btn-row { margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { 
-            padding: 14px 28px; color: white; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;
-            transition: all 0.3s; backdrop-filter: blur(5px); 
+
+        /* 📜 Информация и результаты */
+        .info { 
+            margin-top: 14px; 
+            font-size: 14px; 
+            color: #8d98b0; 
+            letter-spacing: 0.5px;
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .btn-new { background: linear-gradient(135deg, #27ae60, #2ecc71); }
-        .btn-spectate { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
-        .btn-share { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .win { 
+            color: #ebc25e; 
+            font-size: 26px; 
+            font-weight: bold; 
+            margin-top: 12px; 
+            animation: pulse 1.5s infinite; 
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        /* 🕯 Кнопки с медным/золотым отливом */
+        .btn-row { 
+            margin-top: 15px; 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+        }
+        button { 
+            padding: 14px 32px; 
+            color: #e0e0e0; 
+            background: rgba(30, 45, 70, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: bold;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            transition: all 0.3s ease; 
+            backdrop-filter: blur(4px);
+            letter-spacing: 1px;
+        }
+        button:hover { 
+            transform: translateY(-3px); 
+            background: rgba(212, 175, 55, 0.15);
+            border-color: #ebc25e;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15); 
+        }
+        
+        .btn-new { color: #e6c86a; }
+        .btn-spectate { color: #b0bce6; border-color: rgba(176, 188, 230, 0.3); }
+        .btn-spectate:hover { border-color: #b0bce6; background: rgba(176, 188, 230, 0.1); }
+        .btn-share { color: #9aaec2; }
+
+        /* 📦 Модальное окно (Список игроков) */
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; }
+            background: rgba(8, 12, 20, 0.8); backdrop-filter: blur(6px);
+            justify-content: center; align-items: center; z-index: 100; }
         .modal.show { display: flex; }
-        .modal-content { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 15px; padding: 25px; max-width: 400px; width: 90%; }
-        .modal h3 { margin-bottom: 15px; color: #f1c40f; }
-        .player-item { display: flex; align-items: center; gap: 10px; padding: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; border-radius: 8px; }
-        .player-item:hover { background: rgba(255,255,255,0.05); }
-        .player-avatar { width: 40px; height: 40px; border-radius: 50%; background: #3498db; }
-        .close-btn { margin-top: 15px; padding: 10px 20px; background: #e74c3c;
-            border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 14px; }
+        .modal-content { 
+            background: #151e2e; 
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 20px; 
+            padding: 30px; 
+            max-width: 420px; 
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        .modal h3 { margin-bottom: 20px; color: #ebc25e; font-size: 22px; }
+        .player-item { display: flex; align-items: center; gap: 15px; padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 10px; }
+        .player-item:hover { background: rgba(212, 175, 55, 0.08); }
+        .player-avatar { width: 45px; height: 45px; border-radius: 50%; background: #2a3a55; border: 1px solid rgba(212, 175, 55, 0.2); }
+        .close-btn { margin-top: 20px; padding: 12px 24px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #b0bce6; cursor: pointer; font-size: 15px; 
+            font-family: 'Georgia', 'Times New Roman', serif; transition: 0.3s; }
+        .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
     </style>
 </head>
 <body>
     <div id="game">
-        <h1>🃏 Пасьянс Косынка</h1>
-        <div id="spectatorBadge" style="margin-bottom: 8px;"></div>
+        <h1>🕯 Пасьянс Косынка</h1>
+        <div id="spectatorBadge" style="margin-bottom: 10px;"></div>
         <canvas id="canvas"></canvas>
         <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
@@ -112,7 +179,7 @@
             document.getElementById('spectateModal').classList.add('show');
             const list = document.getElementById('playerList');
             if (channelMembers.length === 0) {
-                list.innerHTML = '<p style="color:#aaa;">Нет игроков в канале</p>';
+                list.innerHTML = '<p style="color:#8d98b0; margin-top: 10px;">Нет игроков в канале</p>';
             } else {
                 list.innerHTML = channelMembers.map(m => `
                     <div class="player-item" onclick="watchPlayer('${m.user.username}')">
@@ -128,7 +195,7 @@
 
         function watchPlayer(username) {
             document.getElementById('spectatorBadge').innerHTML = 
-                `<div style="background:rgba(142,68,173,0.3);padding:5px 12px;border-radius:12px;display:inline-block;">
+                `<div style="background:rgba(212,175,55,0.1);padding:6px 16px;border-radius:20px;display:inline-block;border:1px solid rgba(212,175,55,0.2);color:#ebc25e;">
                     👁 Наблюдаем за <strong>${username}</strong>
                 </div>`;
             closeSpectateModal();
@@ -142,16 +209,18 @@
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         const CARD_W = 75, CARD_H = 100;
         
+        // 🎨 Отрисовка рубашки карты (темно-синяя с золотыми ромбами, как на фото)
         const backPattern = document.createElement('canvas');
         backPattern.width = CARD_W; backPattern.height = CARD_H;
         const bctx = backPattern.getContext('2d');
-        bctx.fillStyle = '#1a5276';
+        bctx.fillStyle = '#0f1e36'; // Темно-синий фон
         bctx.fillRect(0, 0, CARD_W, CARD_H);
-        bctx.strokeStyle = '#2471a3';
-        bctx.lineWidth = 2;
+        bctx.strokeStyle = '#ebc25e'; // Золотой контур
+        bctx.lineWidth = 1.5;
         bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
-        bctx.fillStyle = '#2e86c1';
-        const spacing = 18;
+        
+        bctx.fillStyle = '#d4af37'; // Цвет золотого узора
+        const spacing = 20;
         const offsetX = (CARD_W % spacing) / 2;
         const offsetY = (CARD_H % spacing) / 2;
         for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
@@ -174,7 +243,7 @@
                 this.suit = suit; this.rank = rank; this.faceUp = faceUp;
                 this.x = 0; this.y = 0;
             }
-            get color() { return (this.suit === '♥' || this.suit === '♦') ? '#c0392b' : '#1a1a1a'; }
+            get color() { return (this.suit === '♥' || this.suit === '♦') ? '#8b302a' : '#382e26'; } // Приглушенные винтажные цвета
             get value() { return RANKS.indexOf(this.rank); }
             
             draw(dragX, dragY, isDrag) {
@@ -182,34 +251,60 @@
                 let cy = isDrag ? dragY : this.y;
                 
                 ctx.save();
-                if (isDrag) { ctx.globalAlpha = 0.9; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 12; }
+                if (isDrag) { ctx.globalAlpha = 0.95; ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20; }
                 
                 if (this.faceUp) {
-                    ctx.fillStyle = '#ffffff';
+                    // 1. Основной фон (цвет старой бумаги)
+                    ctx.fillStyle = '#f2ebdc'; 
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#333333';
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(cx, cy, CARD_W, CARD_H);
                     
-                    ctx.fillStyle = this.color;
+                    // 2. Винтажные границы (двойная рамка)
+                    ctx.strokeStyle = '#3b2e26';
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeRect(cx+1, cy+1, CARD_W-2, CARD_H-2); // Внешняя
+                    ctx.strokeStyle = '#5d4a3c';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(cx+4, cy+4, CARD_W-8, CARD_H-8); // Внутренняя
+                    
+                    // 3. Цвета букв и мастей
+                    let textColor = (this.suit === '♥' || this.suit === '♦') ? '#8b302a' : '#382e26';
+                    ctx.fillStyle = textColor;
+                    
+                    // 4. Ранг и масть в верхнем левом углу
                     ctx.font = 'bold 20px "Georgia", "Times New Roman", serif';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(this.rank, cx + 6, cy + 4);
-                    ctx.font = '22px "Segoe UI Symbol", Arial';
-                    ctx.fillText(this.suit, cx + 6, cy + 24);
+                    ctx.fillText(this.rank, cx + 8, cy + 6);
+                    ctx.font = '18px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, cx + 8, cy + 28);
                     
+                    // Перевернутые в нижнем правом углу
                     ctx.save();
-                    ctx.translate(cx + CARD_W - 6, cy + CARD_H - 4);
+                    ctx.translate(cx + CARD_W - 8, cy + CARD_H - 6);
                     ctx.rotate(Math.PI);
                     ctx.font = 'bold 20px "Georgia", "Times New Roman", serif';
                     ctx.fillText(this.rank, 0, 0);
-                    ctx.font = '22px "Segoe UI Symbol", Arial';
-                    ctx.fillText(this.suit, 0, 20);
+                    ctx.font = '18px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.suit, 0, 22);
                     ctx.restore();
-                    
-                    ctx.font = '36px "Segoe UI Symbol", Arial';
+
+                    // 5. Центральный символ (масть)
+                    ctx.globalAlpha = 0.6; // Легкая прозрачность для винтажности
+                    ctx.font = '48px "Georgia", "Times New Roman", serif';
                     ctx.textAlign = 'center';
-                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2 - 10);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2);
+                    ctx.globalAlpha = 1.0;
+                    
+                    // 6. Спец-оформление для фигурных карт (Имитация старинных гравюр)
+                    if (['J', 'Q', 'K'].includes(this.rank)) {
+                        ctx.beginPath();
+                        ctx.ellipse(cx + CARD_W/2, cy + CARD_H/2, 20, 28, 0, 0, Math.PI * 2);
+                        ctx.strokeStyle = '#d4af37'; // Золотой контур
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.fillStyle = 'rgba(212, 175, 55, 0.1)'; // Золотая подложка внутри медальона
+                        ctx.fill();
+                    }
                     ctx.textAlign = 'start';
                 } else {
                     ctx.drawImage(backPattern, cx, cy);
@@ -291,9 +386,9 @@
             for (let s of SUITS) {
                 if (foundations[s].length) foundations[s][foundations[s].length-1].draw();
                 else {
-                    ctx.strokeStyle = hoverSuit === s ? '#f1c40f' : 'rgba(255,255,255,0.3)';
+                    ctx.strokeStyle = hoverSuit === s ? '#ebc25e' : 'rgba(255,255,255,0.08)';
                     ctx.lineWidth = hoverSuit === s ? 2 : 1;
-                    ctx.setLineDash([4,4]); ctx.strokeRect(fx, fy, CARD_W, CARD_H); ctx.setLineDash([]);
+                    ctx.setLineDash([6,6]); ctx.strokeRect(fx, fy, CARD_W, CARD_H); ctx.setLineDash([]);
                 }
                 fx += CARD_W + 5;
             }
@@ -306,7 +401,7 @@
             let cx = 12, cy = 128;
             for (let i = 0; i < 7; i++) {
                 if (hoverCol === i && isDragging) {
-                    ctx.fillStyle = 'rgba(241,196,15,0.2)';
+                    ctx.fillStyle = 'rgba(235, 194, 94, 0.1)';
                     let lastY = columns[i].length ? columns[i][columns[i].length-1].y + 28 : cy;
                     ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
@@ -323,8 +418,8 @@
                 }
             }
             
-            ctx.font = '12px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillText(`Ходов: ${moves}`, canvas.width - 80, canvas.height - 8);
+            ctx.font = '14px Georgia, serif'; ctx.fillStyle = 'rgba(141, 152, 176, 0.6)';
+            ctx.fillText(`Ходов: ${moves}`, canvas.width - 90, canvas.height - 10);
         }
 
         canvas.onmousedown = (e) => {
