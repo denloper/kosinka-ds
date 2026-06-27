@@ -115,6 +115,7 @@
         .btn-share { color: #9aaec2; }
         .btn-theme { color: #c0a0b0; }
         .btn-hint { color: #f0d060; }
+        .btn-undo { color: #a0c0f0; }
         .hidden { display: none !important; }
 
         .modal { 
@@ -249,10 +250,12 @@
             <button class="btn-spectate" id="btnWatch" onclick="openWatchModal()">👁 Смотреть игру</button>
             <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
             <button class="btn-hint" id="btnHint" onclick="showHint()">💡 Подсказка</button>
+            <button class="btn-undo" id="btnUndo" onclick="undoMove()">↩ Отмена</button>
             <button class="btn-theme" onclick="showThemePicker()">🎨 Тема</button>
         </div>
     </div>
 
+    <!-- Модальное окно выбора темы -->
     <div class="modal" id="themeModal">
         <div class="modal-content">
             <h3>🎨 Выберите тему</h3>
@@ -262,6 +265,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно просмотра игр -->
     <div class="modal" id="watchModal">
         <div class="modal-content">
             <h3>👁 Выберите игру для наблюдения</h3>
@@ -624,6 +628,7 @@
         const params = new URLSearchParams(window.location.search);
         const gameId = params.get('game');
         const isWatcher = params.has('watch');
+        const channelId = params.get('channel_id');
 
         let ws = null;
         let isHost = false;
@@ -644,6 +649,50 @@
 
         let backPattern = document.createElement('canvas');
 
+        // ============ ОТМЕНА ХОДА ============
+        const MAX_UNDO = 50;
+        let undoStack = [];
+
+        function saveUndoState() {
+            const state = {
+                stock: stock.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
+                waste: waste.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
+                foundations: {
+                    '♠': foundations['♠'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
+                    '♥': foundations['♥'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
+                    '♦': foundations['♦'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y })),
+                    '♣': foundations['♣'].map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y }))
+                },
+                columns: columns.map(col => col.map(c => ({ suit: c.suit, rank: c.rank, faceUp: c.faceUp, x: c.x, y: c.y }))),
+                moves: moves,
+                win: win
+            };
+            undoStack.push(state);
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+        }
+
+        function undoMove() {
+            if (isWatcher || win || !undoStack.length) return;
+            const state = undoStack.pop();
+            stock = state.stock.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o));
+            waste = state.waste.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o));
+            foundations = {
+                '♠': state.foundations['♠'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
+                '♥': state.foundations['♥'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
+                '♦': state.foundations['♦'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)),
+                '♣': state.foundations['♣'].map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o))
+            };
+            columns = state.columns.map(col => col.map(o => Object.assign(new Card(o.suit, o.rank, o.faceUp), o)));
+            moves = state.moves;
+            win = state.win;
+            document.getElementById('winMessage').innerHTML = win ? '<div class="win">🏆 Победа!</div>' : '';
+            clearHint();
+            layoutCards();
+            drawAll();
+            sendGameState();
+        }
+
+        // ============ ГЕНЕРАЦИЯ РУБАШКИ ============
         function generateBackPattern() {
             backPattern.width = CARD_W * dpr;
             backPattern.height = CARD_H * dpr;
@@ -780,6 +829,7 @@
             moves = 0;
             win = false;
             document.getElementById('winMessage').innerHTML = '';
+            undoStack = [];
             clearHint();
             
             for (let s of SUITS) {
@@ -1052,6 +1102,7 @@
             
             let sx = 12 + 4*(CARD_W+6) + 18;
             if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
+                saveUndoState();
                 if (stock.length) {
                     waste.push(stock.pop());
                     waste[waste.length-1].faceUp = true;
@@ -1132,6 +1183,7 @@
             if (!isDragging || isWatcher) return;
             let placed = false;
             if (hoverSuit && dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
+                saveUndoState();
                 foundations[hoverSuit].push(dragCards[0]);
                 if (dragFromWaste) waste.pop();
                 else columns[dragFromCol].splice(columns[dragFromCol].length-1);
@@ -1140,6 +1192,7 @@
                 moves++;
                 placed = true;
             } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
+                saveUndoState();
                 if (dragFromWaste) columns[hoverCol].push(waste.pop());
                 else {
                     const moved = columns[dragFromCol].splice(columns[dragFromCol].length-dragCards.length);
@@ -1177,6 +1230,7 @@
                 if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
                     const card = columns[i][columns[i].length-1];
                     if (canPlaceOnFoundation(card)) {
+                        saveUndoState();
                         foundations[card.suit].push(columns[i].pop());
                         if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
                             columns[i][columns[i].length-1].faceUp = true;
@@ -1236,7 +1290,7 @@
         // ============ МОДАЛЬНОЕ ОКНО ДЛЯ НАБЛЮДЕНИЯ ============
         let watchListWs = null;
 
-        async function openWatchModal() {
+        function openWatchModal() {
             document.getElementById('watchModal').classList.add('show');
             document.getElementById('gameList').innerHTML = 'Поиск активных игр...';
             
@@ -1247,7 +1301,9 @@
             
             watchListWs = new WebSocket(WS_URL);
             watchListWs.onopen = () => {
-                watchListWs.send(JSON.stringify({ action: 'list' }));
+                const payload = { action: 'list' };
+                if (channelId) payload.channel_id = channelId;
+                watchListWs.send(JSON.stringify(payload));
             };
             watchListWs.onmessage = (event) => {
                 try {
@@ -1256,7 +1312,11 @@
                         const games = data.games || [];
                         const listDiv = document.getElementById('gameList');
                         if (games.length === 0) {
-                            listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр. Создайте свою!</p>';
+                            listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр в этом голосовом канале.</p>';
+                        } else if (games.length === 1) {
+                            // Автоматически присоединиться к единственной игре
+                            closeWatchModal();
+                            window.location.href = `?game=${games[0].id}&watch=true`;
                         } else {
                             listDiv.innerHTML = games.map(game => `
                                 <div class="game-item" onclick="watchGameById('${game.id}')">
@@ -1368,6 +1428,7 @@
                     document.getElementById('btnShare').classList.add('hidden');
                     document.getElementById('btnNewGame').classList.add('hidden');
                     document.getElementById('btnHint').classList.add('hidden');
+                    document.getElementById('btnUndo').classList.add('hidden');
                 }
                 connectWebSocket();
             } else {
