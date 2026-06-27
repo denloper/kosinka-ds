@@ -16,7 +16,7 @@
             color: #e0e0e0; 
             user-select: none;
             background-image: radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%);
-            overflow: hidden;
+            transition: background 0.5s ease, background-image 0.5s ease;
         }
         #game { 
             text-align: center; 
@@ -100,7 +100,69 @@
         .btn-new { color: #e6c86a; }
         .btn-spectate { color: #b0bce6; }
         .btn-share { color: #9aaec2; }
+        .btn-bg { color: #c0a0b0; }
         .hidden { display: none !important; }
+
+        /* Модальное окно выбора фона */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 100; 
+        }
+        .modal.show { display: flex; }
+        .modal-content { 
+            background: #151e2e; 
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 20px; 
+            padding: 25px; 
+            max-width: 400px; 
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        .modal h3 { margin-bottom: 15px; color: #ebc25e; font-size: 20px; }
+        .bg-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px; 
+            margin-bottom: 15px;
+        }
+        .bg-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .bg-option:hover {
+            border-color: #ebc25e;
+            transform: scale(1.05);
+        }
+        .close-btn { 
+            margin-top: 10px; 
+            padding: 12px 24px; 
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            color: #b0bce6; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            transition: 0.3s; 
+        }
+        .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .reset-btn {
+            background: transparent;
+            border: 1px dashed rgba(255,255,255,0.3);
+            margin-top: 8px;
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +176,17 @@
             <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
             <button class="btn-spectate" id="btnWatch" onclick="joinAsWatcher()">👁 Смотреть игру</button>
             <button class="btn-share" id="btnShare" onclick="shareGame()">🔗 Поделиться</button>
+            <button class="btn-bg" onclick="showBackgroundPicker()">🎨 Фон</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно выбора фона -->
+    <div class="modal" id="bgModal">
+        <div class="modal-content">
+            <h3>🎨 Выберите фон</h3>
+            <div class="bg-grid" id="bgGrid"></div>
+            <button class="reset-btn" onclick="resetBackground()">↩ Сбросить на стандартный</button>
+            <button class="close-btn" onclick="closeBackgroundPicker()">✕ Закрыть</button>
         </div>
     </div>
 
@@ -141,7 +214,64 @@
         let hoverCol = -1, hoverSuit = null;
         let moves = 0, win = false;
 
-        // Генерация рубашки карт (винтажная)
+        // ============ ФОНЫ ============
+        const backgrounds = [
+            { name: 'Исходный', css: 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)' },
+            { name: 'Лес', css: 'radial-gradient(circle at 20% 80%, #2d5016 0%, #0a1a05 100%)' },
+            { name: 'Закат', css: 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)' },
+            { name: 'Океан', css: 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)' },
+            { name: 'Фиолет', css: 'radial-gradient(circle at 30% 70%, #6b2fa0 0%, #150a24 100%)' },
+            { name: 'Золото', css: 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)' },
+            { name: 'Космос', css: 'radial-gradient(circle at 10% 10%, #1a1a2e 0%, #0f0f1a 100%)' },
+            { name: 'Розы', css: 'radial-gradient(circle at 70% 30%, #a04050 0%, #200a10 100%)' }
+        ];
+
+        function setBackground(bgCss) {
+            document.body.style.background = bgCss;
+            document.body.style.backgroundImage = bgCss.includes('gradient') ? bgCss : 'none';
+            localStorage.setItem('solitaire_bg', bgCss);
+        }
+
+        function loadBackground() {
+            const saved = localStorage.getItem('solitaire_bg');
+            if (saved) {
+                document.body.style.background = saved;
+                document.body.style.backgroundImage = saved.includes('gradient') ? saved : 'none';
+            }
+        }
+
+        function resetBackground() {
+            const defaultBg = 'radial-gradient(circle at 50% 50%, #1a2438 0%, #090c14 100%)';
+            setBackground(defaultBg);
+            closeBackgroundPicker();
+        }
+
+        // ============ МОДАЛЬНОЕ ОКНО ФОНА ============
+        function showBackgroundPicker() {
+            const modal = document.getElementById('bgModal');
+            const grid = document.getElementById('bgGrid');
+            grid.innerHTML = '';
+            backgrounds.forEach(bg => {
+                const div = document.createElement('div');
+                div.className = 'bg-option';
+                div.style.background = bg.css;
+                div.title = bg.name;
+                div.onclick = () => { setBackground(bg.css); closeBackgroundPicker(); };
+                grid.appendChild(div);
+            });
+            modal.classList.add('show');
+        }
+
+        function closeBackgroundPicker() {
+            document.getElementById('bgModal').classList.remove('show');
+        }
+
+        // Закрытие по клику вне модалки
+        document.getElementById('bgModal').addEventListener('click', function(e) {
+            if (e.target === this) closeBackgroundPicker();
+        });
+
+        // ============ Генерация рубашки карт ============
         const backPattern = document.createElement('canvas');
         backPattern.width = CARD_W;
         backPattern.height = CARD_H;
@@ -265,13 +395,11 @@
                     deck.push(new Card(s, r));
                 }
             }
-            // Перемешивание
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
             
-            // Раздача
             for (let col = 0; col < 7; col++) {
                 for (let row = 0; row <= col; row++) {
                     const card = deck.pop();
@@ -289,14 +417,12 @@
             init();
         }
 
-        // ============ РАСКЛАДКА КАРТ ============
         function layoutCards() {
             const startX = 12, startY = 10;
             let fx = startX, fy = startY;
             const colStartX = startX, colStartY = 150;
             const colSpacing = CARD_W + 9;
             
-            // Фонды
             for (let s of SUITS) {
                 if (foundations[s].length) {
                     foundations[s][foundations[s].length-1].x = fx;
@@ -304,7 +430,6 @@
                 }
                 fx += CARD_W + 6;
             }
-            // Сток и отвал
             let sx = startX + 4*(CARD_W+6) + 18;
             if (stock.length) {
                 stock[stock.length-1].x = sx;
@@ -314,7 +439,6 @@
                 waste[waste.length-1].x = sx + CARD_W + 12;
                 waste[waste.length-1].y = startY;
             }
-            // Столбцы
             let cx = colStartX, cy = colStartY;
             for (let i = 0; i < 7; i++) {
                 let col = columns[i];
@@ -326,7 +450,6 @@
             }
         }
 
-        // ============ ОТРИСОВКА ============
         function drawAll() {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -377,7 +500,6 @@
             }
         }
 
-        // ============ ИГРОВАЯ ЛОГИКА ============
         function canPlaceOnFoundation(card) {
             const arr = foundations[card.suit];
             if (arr.length === 0) return card.rank === 'A';
@@ -398,7 +520,6 @@
             }
         }
 
-        // ============ УПРАВЛЕНИЕ МЫШЬЮ ============
         canvas.onmousedown = (e) => {
             if (win) { init(); return; }
             if (isWatcher) return;
@@ -530,7 +651,6 @@
             }
         };
 
-        // ============ РАЗМЕР ХОЛСТА ============
         function resize() {
             canvas.width = Math.min(window.innerWidth - 40, 1120);
             canvas.height = Math.min(window.innerHeight - 220, 700);
@@ -539,7 +659,6 @@
         }
         window.addEventListener('resize', resize);
 
-        // ============ МУЛЬТИПЛЕЕР ============
         function getGameState() {
             return {
                 foundations: {
@@ -575,7 +694,6 @@
             drawAll();
         }
 
-        // ============ WEBSOCKET ============
         function connectWebSocket() {
             if (!gameId) return;
             ws = new WebSocket(WS_URL);
@@ -628,8 +746,8 @@
             }
         }
 
-        // ============ СТАРТ ============
         function startApp() {
+            loadBackground();
             resize();
             init();
             
