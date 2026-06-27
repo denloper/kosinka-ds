@@ -212,7 +212,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно -->
     <div class="modal" id="themeModal">
         <div class="modal-content">
             <h3>🎨 Выберите тему</h3>
@@ -230,7 +229,7 @@
         const SUITS = ['♠', '♥', '♦', '♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-        // ============ ТЕМЫ (полный набор) ============
+        // ============ ТЕМЫ ============
         const themes = [
             {
                 name: 'Классика',
@@ -466,10 +465,9 @@
             }
         ];
 
-        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ КАРТ ============
         let cardColors = { ...themes[0].card };
+        const dpr = window.devicePixelRatio || 1;
 
-        // ============ ФУНКЦИИ ТЕМ ============
         function applyTheme(theme) {
             const root = document.documentElement;
             Object.entries(theme.vars).forEach(([prop, value]) => {
@@ -589,14 +587,15 @@
         let hintTargetCol = -1;
         let hintTargetSuit = null;
         let hintTimeout = null;
+        let rafId = null;
 
-        // Рубашка
         let backPattern = document.createElement('canvas');
 
         function generateBackPattern() {
-            backPattern.width = CARD_W;
-            backPattern.height = CARD_H;
+            backPattern.width = CARD_W * dpr;
+            backPattern.height = CARD_H * dpr;
             const bctx = backPattern.getContext('2d');
+            bctx.scale(dpr, dpr);
             bctx.fillStyle = cardColors.backColor;
             bctx.fillRect(0, 0, CARD_W, CARD_H);
             bctx.strokeStyle = cardColors.backBorder;
@@ -613,6 +612,7 @@
                     bctx.fill();
                 }
             }
+            bctx.setTransform(1, 0, 0, 1, 0, 0);
         }
 
         class Card {
@@ -693,7 +693,7 @@
                         ctx.fill();
                     }
                 } else {
-                    ctx.drawImage(backPattern, cx, cy);
+                    ctx.drawImage(backPattern, cx, cy, CARD_W, CARD_H);
                 }
                 ctx.restore();
             }
@@ -786,9 +786,91 @@
             }
         }
 
+        function clearHint() {
+            hintCards = [];
+            hintTargetCol = -1;
+            hintTargetSuit = null;
+            if (hintTimeout) {
+                clearTimeout(hintTimeout);
+                hintTimeout = null;
+            }
+        }
+
+        function showHint() {
+            if (win || isWatcher) return;
+            clearHint();
+            
+            for (let i = 0; i < 7; i++) {
+                if (columns[i].length > 0) {
+                    const card = columns[i][columns[i].length-1];
+                    if (canPlaceOnFoundation(card)) {
+                        hintCards = [card];
+                        hintTargetSuit = card.suit;
+                        drawAll();
+                        hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+                        return;
+                    }
+                }
+            }
+            if (waste.length > 0) {
+                const card = waste[waste.length-1];
+                if (canPlaceOnFoundation(card)) {
+                    hintCards = [card];
+                    hintTargetSuit = card.suit;
+                    drawAll();
+                    hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+                    return;
+                }
+            }
+            
+            if (waste.length > 0) {
+                const card = waste[waste.length-1];
+                for (let i = 0; i < 7; i++) {
+                    if (canPlaceOnColumn(card, columns[i])) {
+                        hintCards = [card];
+                        hintTargetCol = i;
+                        drawAll();
+                        hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+                        return;
+                    }
+                }
+            }
+            for (let i = 0; i < 7; i++) {
+                if (columns[i].length === 0) continue;
+                for (let j = columns[i].length-1; j >= 0; j--) {
+                    if (!columns[i][j].faceUp) break;
+                    const group = columns[i].slice(j);
+                    if (isValidGroup(group)) {
+                        const movingCard = group[0];
+                        for (let k = 0; k < 7; k++) {
+                            if (k === i) continue;
+                            if (canPlaceOnColumn(movingCard, columns[k])) {
+                                hintCards = group;
+                                hintTargetCol = k;
+                                drawAll();
+                                hintTimeout = setTimeout(() => { clearHint(); drawAll(); }, 2500);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         function drawAll() {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const cvs = document.getElementById('canvas');
+            const ctx = cvs.getContext('2d');
+            const displayWidth = Math.min(window.innerWidth - 40, 1120);
+            const displayHeight = Math.min(window.innerHeight - 220, 700);
+            cvs.width = displayWidth * dpr;
+            cvs.height = displayHeight * dpr;
+            cvs.style.width = displayWidth + 'px';
+            cvs.style.height = displayHeight + 'px';
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
+            ctx.imageSmoothingEnabled = true;
+            
+            ctx.clearRect(0, 0, displayWidth, displayHeight);
             
             let fx = 12, fy = 10;
             for (let s of SUITS) {
@@ -861,9 +943,9 @@
             
             ctx.font = '14px Georgia, serif';
             ctx.fillStyle = 'rgba(141, 152, 176, 0.6)';
-            ctx.fillText(`Ходов: ${moves}`, canvas.width - 90, canvas.height - 10);
+            ctx.fillText(`Ходов: ${moves}`, displayWidth - 90, displayHeight - 10);
             if (isWatcher || spectatorsCount > 0) {
-                ctx.fillText(`👁 ${spectatorsCount}`, canvas.width - 180, canvas.height - 10);
+                ctx.fillText(`👁 ${spectatorsCount}`, displayWidth - 180, displayHeight - 10);
             }
         }
 
@@ -888,98 +970,13 @@
             }
         }
 
-        function clearHint() {
-            hintCards = [];
-            hintTargetCol = -1;
-            hintTargetSuit = null;
-            if (hintTimeout) {
-                clearTimeout(hintTimeout);
-                hintTimeout = null;
-            }
-        }
-
-        function showHint() {
-            if (win || isWatcher) return;
-            clearHint();
-            
-            // авто на фундамент из столбцов
-            for (let i = 0; i < 7; i++) {
-                if (columns[i].length > 0) {
-                    const card = columns[i][columns[i].length-1];
-                    if (canPlaceOnFoundation(card)) {
-                        hintCards = [card];
-                        hintTargetSuit = card.suit;
-                        drawAll();
-                        hintTimeout = setTimeout(() => {
-                            clearHint();
-                            drawAll();
-                        }, 2500);
-                        return;
-                    }
-                }
-            }
-            if (waste.length > 0) {
-                const card = waste[waste.length-1];
-                if (canPlaceOnFoundation(card)) {
-                    hintCards = [card];
-                    hintTargetSuit = card.suit;
-                    drawAll();
-                    hintTimeout = setTimeout(() => {
-                        clearHint();
-                        drawAll();
-                    }, 2500);
-                    return;
-                }
-            }
-            
-            // отвал -> столбец
-            if (waste.length > 0) {
-                const card = waste[waste.length-1];
-                for (let i = 0; i < 7; i++) {
-                    if (canPlaceOnColumn(card, columns[i])) {
-                        hintCards = [card];
-                        hintTargetCol = i;
-                        drawAll();
-                        hintTimeout = setTimeout(() => {
-                            clearHint();
-                            drawAll();
-                        }, 2500);
-                        return;
-                    }
-                }
-            }
-            // столбец -> столбец
-            for (let i = 0; i < 7; i++) {
-                if (columns[i].length === 0) continue;
-                for (let j = columns[i].length-1; j >= 0; j--) {
-                    if (!columns[i][j].faceUp) break;
-                    const group = columns[i].slice(j);
-                    if (isValidGroup(group)) {
-                        const movingCard = group[0];
-                        for (let k = 0; k < 7; k++) {
-                            if (k === i) continue;
-                            if (canPlaceOnColumn(movingCard, columns[k])) {
-                                hintCards = group;
-                                hintTargetCol = k;
-                                drawAll();
-                                hintTimeout = setTimeout(() => {
-                                    clearHint();
-                                    drawAll();
-                                }, 2500);
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         canvas.onmousedown = (e) => {
             if (win) { init(); return; }
             if (isWatcher) return;
             clearHint();
             const r = canvas.getBoundingClientRect();
-            const mx = e.clientX - r.left, my = e.clientY - r.top;
+            const mx = (e.clientX - r.left) * (displayWidth / r.width);
+            const my = (e.clientY - r.top) * (displayHeight / r.height);
             
             let sx = 12 + 4*(CARD_W+6) + 18;
             if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
@@ -1029,13 +1026,14 @@
             dragOffsetY = my - cards[0].y;
             mouseX = mx;
             mouseY = my;
-            drawAll();
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
         }
 
         canvas.onmousemove = (e) => {
             const r = canvas.getBoundingClientRect();
-            mouseX = e.clientX - r.left;
-            mouseY = e.clientY - r.top;
+            mouseX = (e.clientX - r.left) * (displayWidth / r.width);
+            mouseY = (e.clientY - r.top) * (displayHeight / r.height);
             if (!isDragging) return;
             
             hoverCol = -1;
@@ -1053,7 +1051,8 @@
                     hoverCol = i;
                 cx += colSpacing;
             }
-            drawAll();
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
         };
 
         canvas.onmouseup = () => {
@@ -1079,9 +1078,7 @@
                 placed = true;
             }
             
-            if (placed) {
-                playPlace();
-            }
+            if (placed) playPlace();
             
             isDragging = false;
             dragCards = [];
@@ -1090,7 +1087,8 @@
             hoverCol = -1;
             hoverSuit = null;
             layoutCards();
-            drawAll();
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => { drawAll(); rafId = null; });
             if (placed) checkWin();
             sendGameState();
         };
@@ -1099,7 +1097,8 @@
             if (win || isWatcher) return;
             clearHint();
             const r = canvas.getBoundingClientRect();
-            const mx = e.clientX - r.left, my = e.clientY - r.top;
+            const mx = (e.clientX - r.left) * (displayWidth / r.width);
+            const my = (e.clientY - r.top) * (displayHeight / r.height);
             for (let i = 0; i < 7; i++) {
                 if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
                     const card = columns[i][columns[i].length-1];
@@ -1119,13 +1118,10 @@
             }
         };
 
-        function resize() {
-            canvas.width = Math.min(window.innerWidth - 40, 1120);
-            canvas.height = Math.min(window.innerHeight - 220, 700);
+        window.addEventListener('resize', () => {
             layoutCards();
             drawAll();
-        }
-        window.addEventListener('resize', resize);
+        });
 
         function getGameState() {
             return {
@@ -1217,8 +1213,9 @@
 
         function startApp() {
             loadTheme();
-            resize();
-            init();
+            generateBackPattern();
+            layoutCards();
+            drawAll();
             
             if (gameId) {
                 if (isWatcher) {
@@ -1231,6 +1228,9 @@
             }
         }
 
+        // Глобальные переменные для размеров канваса
+        let displayWidth = 1120;
+        let displayHeight = 700;
         startApp();
     </script>
 </body>
