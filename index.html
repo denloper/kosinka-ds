@@ -7,86 +7,174 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: #2d1b69;
             display: flex; justify-content: center; align-items: center; 
             min-height: 100vh; font-family: 'Segoe UI', Arial, sans-serif;
             color: white; user-select: none;
         }
-        #game { text-align: center; background: rgba(0,0,0,0.3); padding: 15px;
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px); max-width: 950px; }
-        h1 { margin-bottom: 5px; font-size: 22px;
+        #game { 
+            text-align: center; 
+            background: rgba(0,0,0,0.3); 
+            padding: 20px;
+            border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 95vw; max-width: 1100px;
+        }
+        h1 { 
+            margin-bottom: 8px; font-size: 28px;
             background: linear-gradient(45deg, #f1c40f, #e67e22);
-            h1 { 
-    margin-bottom: 5px; 
-    font-size: 22px;
-    background: linear-gradient(45deg, #f1c40f, #e67e22);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-}
-        canvas { border-radius: 12px; background: linear-gradient(135deg, #1a5c2a, #0d3b18);
-            cursor: grab; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+            background-clip: text; -webkit-background-clip: text; color: transparent;
+        }
+        canvas { 
+            border-radius: 12px; background: #076324;
+            cursor: grab; box-shadow: 0 8px 32px rgba(0,0,0,0.5); width: 100%;
+        }
         canvas:active { cursor: grabbing; }
-        .info { margin-top: 8px; font-size: 12px; color: #888; }
-        .win { color: #f1c40f; font-size: 20px; font-weight: bold; margin-top: 10px; }
-        .btn-row { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-        button { padding: 10px 20px; color: white; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold;
-            transition: all 0.3s; backdrop-filter: blur(5px); }
+        .info { margin-top: 10px; font-size: 14px; color: #aaa; }
+        .win { color: #f1c40f; font-size: 24px; font-weight: bold; margin-top: 12px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .btn-row { margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        button { 
+            padding: 14px 28px; color: white; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: all 0.3s; backdrop-filter: blur(5px); 
+        }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .btn-new { background: linear-gradient(135deg, #27ae60, #2ecc71); }
         .btn-spectate { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
         .btn-share { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .game-id { background: rgba(255,255,255,0.1); padding: 6px; border-radius: 6px;
-            font-size: 13px; margin: 8px 0; }
-        input { padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.3); color: white; font-size: 13px; text-align: center; width: 120px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 100; }
+        .modal.show { display: flex; }
+        .modal-content { background: #1a1a2e; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px; padding: 25px; max-width: 400px; width: 90%; }
+        .modal h3 { margin-bottom: 15px; color: #f1c40f; }
+        .player-item { display: flex; align-items: center; gap: 10px; padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; border-radius: 8px; }
+        .player-item:hover { background: rgba(255,255,255,0.05); }
+        .player-avatar { width: 40px; height: 40px; border-radius: 50%; background: #3498db; }
+        .close-btn { margin-top: 15px; padding: 10px 20px; background: #e74c3c;
+            border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
     <div id="game">
         <h1>🃏 Пасьянс Косынка</h1>
+        <div id="spectatorBadge" style="margin-bottom: 8px;"></div>
         <canvas id="canvas"></canvas>
         <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
         <div id="winMessage"></div>
         <div class="btn-row">
             <button class="btn-new" onclick="init()">🔄 Новая игра</button>
+            <button class="btn-spectate" onclick="openSpectateModal()">👁 Наблюдать</button>
             <button class="btn-share" onclick="shareGame()">🔗 Поделиться</button>
         </div>
     </div>
 
+    <div class="modal" id="spectateModal">
+        <div class="modal-content">
+            <h3>👁 Выберите игрока</h3>
+            <div class="player-list" id="playerList"></div>
+            <button class="close-btn" onclick="closeSpectateModal()">Закрыть</button>
+        </div>
+    </div>
+
     <script>
+        // Discord SDK
+        let discordSdk = null;
+        let channelMembers = [];
+
+        try {
+            if (typeof DiscordSDK !== 'undefined') {
+                discordSdk = new DiscordSDK('1066846885995892767');
+                setupDiscord();
+            }
+        } catch(e) {}
+
+        async function setupDiscord() {
+            try {
+                await discordSdk.ready();
+                const updateMembers = async () => {
+                    try {
+                        const { participants } = await discordSdk.commands.getInstanceConnectedParticipants();
+                        channelMembers = participants || [];
+                    } catch(e) {}
+                };
+                await updateMembers();
+                setInterval(updateMembers, 5000);
+                discordSdk.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', (data) => {
+                    channelMembers = data.participants || [];
+                });
+            } catch(e) {}
+        }
+
+        function openSpectateModal() {
+            document.getElementById('spectateModal').classList.add('show');
+            const list = document.getElementById('playerList');
+            if (channelMembers.length === 0) {
+                list.innerHTML = '<p style="color:#aaa;">Нет игроков в канале</p>';
+            } else {
+                list.innerHTML = channelMembers.map(m => `
+                    <div class="player-item" onclick="watchPlayer('${m.user.username}')">
+                        <img class="player-avatar" src="${m.user.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" 
+                             onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                        <div class="player-name">${m.user.username}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function closeSpectateModal() { document.getElementById('spectateModal').classList.remove('show'); }
+
+        function watchPlayer(username) {
+            document.getElementById('spectatorBadge').innerHTML = 
+                `<div style="background:rgba(142,68,173,0.3);padding:5px 12px;border-radius:12px;display:inline-block;">
+                    👁 Наблюдаем за <strong>${username}</strong>
+                </div>`;
+            closeSpectateModal();
+        }
+
+        // Игра
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         
         const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-        const CARD_W = 70, CARD_H = 96;
+        const CARD_W = 75, CARD_H = 100;
         
-        let columns = [[],[],[],[],[],[],[]];
-        let foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
-        let stock = [], waste = [];
+        const backPattern = document.createElement('canvas');
+        backPattern.width = CARD_W; backPattern.height = CARD_H;
+        const bctx = backPattern.getContext('2d');
+        bctx.fillStyle = '#1a5276';
+        bctx.fillRect(0, 0, CARD_W, CARD_H);
+        bctx.strokeStyle = '#2471a3';
+        bctx.lineWidth = 2;
+        bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+        bctx.fillStyle = '#2e86c1';
+        const spacing = 18;
+        const offsetX = (CARD_W % spacing) / 2;
+        const offsetY = (CARD_H % spacing) / 2;
+        for (let x = offsetX + spacing/2; x < CARD_W - offsetX; x += spacing) {
+            for (let y = offsetY + spacing/2; y < CARD_H - offsetY; y += spacing) {
+                bctx.beginPath();
+                bctx.moveTo(x, y - 4); bctx.lineTo(x + 4, y);
+                bctx.lineTo(x, y + 4); bctx.lineTo(x - 4, y);
+                bctx.closePath(); bctx.fill();
+            }
+        }
+        
+        let columns, foundations, stock, waste;
         let win = false, moves = 0;
-        
-        let isDragging = false;
-        let dragCards = [];
-        let dragFromCol = -1;
-        let dragFromWaste = false;
-        let dragOffsetX = 0, dragOffsetY = 0;
-        let mouseX = 0, mouseY = 0;
-        let hoverCol = -1;
-        let hoverSuit = null;
+        let isDragging = false, dragCards = [], dragFromCol = -1, dragFromWaste = false;
+        let dragOffsetX = 0, dragOffsetY = 0, mouseX = 0, mouseY = 0;
+        let hoverCol = -1, hoverSuit = null;
 
         class Card {
             constructor(suit, rank, faceUp = false) {
-                this.suit = suit;
-                this.rank = rank;
-                this.faceUp = faceUp;
+                this.suit = suit; this.rank = rank; this.faceUp = faceUp;
                 this.x = 0; this.y = 0;
             }
-            get color() { return (this.suit === '♥' || this.suit === '♦') ? '#e74c3c' : '#2c3e50'; }
+            get color() { return (this.suit === '♥' || this.suit === '♦') ? '#c0392b' : '#1a1a1a'; }
             get value() { return RANKS.indexOf(this.rank); }
             
             draw(dragX, dragY, isDrag) {
@@ -94,46 +182,43 @@
                 let cy = isDrag ? dragY : this.y;
                 
                 ctx.save();
-                if (isDrag) {
-                    ctx.globalAlpha = 0.85;
-                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                    ctx.shadowBlur = 10;
-                    ctx.shadowOffsetX = 3;
-                    ctx.shadowOffsetY = 3;
-                }
+                if (isDrag) { ctx.globalAlpha = 0.9; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 12; }
                 
                 if (this.faceUp) {
-                    // Белый фон карты
-                    ctx.fillStyle = '#fefefe';
+                    ctx.fillStyle = '#ffffff';
                     ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#bbb';
-                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = '#333333';
+                    ctx.lineWidth = 1.5;
                     ctx.strokeRect(cx, cy, CARD_W, CARD_H);
                     
-                    // Масть и номер
                     ctx.fillStyle = this.color;
-                    ctx.font = 'bold 16px "Segoe UI", Arial';
+                    ctx.font = 'bold 20px "Georgia", "Times New Roman", serif';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(this.rank, cx + 6, cy + 8);
-                    ctx.font = '22px Arial';
-                    ctx.fillText(this.suit, cx + 6, cy + 30);
+                    ctx.fillText(this.rank, cx + 6, cy + 4);
+                    ctx.font = '22px "Segoe UI Symbol", Arial';
+                    ctx.fillText(this.suit, cx + 6, cy + 24);
+                    
+                    ctx.save();
+                    ctx.translate(cx + CARD_W - 6, cy + CARD_H - 4);
+                    ctx.rotate(Math.PI);
+                    ctx.font = 'bold 20px "Georgia", "Times New Roman", serif';
+                    ctx.fillText(this.rank, 0, 0);
+                    ctx.font = '22px "Segoe UI Symbol", Arial';
+                    ctx.fillText(this.suit, 0, 20);
+                    ctx.restore();
+                    
+                    ctx.font = '36px "Segoe UI Symbol", Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.suit, cx + CARD_W/2, cy + CARD_H/2 - 10);
+                    ctx.textAlign = 'start';
                 } else {
-                    // Рубашка
-                    ctx.fillStyle = '#2980b9';
-                    ctx.fillRect(cx, cy, CARD_W, CARD_H);
-                    ctx.strokeStyle = '#1a5276';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(cx, cy, CARD_W, CARD_H);
-                    ctx.fillStyle = '#2471a3';
-                    ctx.fillRect(cx + 8, cy + 8, CARD_W - 16, CARD_H - 16);
+                    ctx.drawImage(backPattern, cx, cy);
                 }
-                
                 ctx.restore();
             }
             
             contains(mx, my) {
-                return mx >= this.x && mx <= this.x + CARD_W && 
-                       my >= this.y && my <= this.y + CARD_H;
+                return mx >= this.x && mx <= this.x + CARD_W && my >= this.y && my <= this.y + CARD_H;
             }
         }
 
@@ -150,310 +235,190 @@
         }
 
         function checkWin() {
-            for (let s of SUITS) {
-                if (foundations[s].length !== 13) return false;
-            }
+            for (let s of SUITS) if (foundations[s].length !== 13) return false;
             win = true;
-            document.getElementById('winMessage').innerHTML = 
-                `<div class="win">🎉 Победа за ${moves} ходов!</div>`;
+            document.getElementById('winMessage').innerHTML = `<div class="win">🎉 Победа за ${moves} ходов!</div>`;
             return true;
         }
 
         function init() {
             let deck = [];
-            for (let s of SUITS) {
-                for (let r of RANKS) {
-                    deck.push(new Card(s, r));
-                }
-            }
-            // Перемешивание
+            for (let s of SUITS) for (let r of RANKS) deck.push(new Card(s, r));
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
-            
             columns = [[],[],[],[],[],[],[]];
-            for (let i = 0; i < 7; i++) {
-                for (let j = i; j < 7; j++) {
-                    const c = deck.pop();
-                    if (j === i) c.faceUp = true;
-                    columns[j].push(c);
-                }
+            for (let i = 0; i < 7; i++) for (let j = i; j < 7; j++) {
+                const c = deck.pop(); if (j === i) c.faceUp = true;
+                columns[j].push(c);
             }
-            stock = deck;
-            waste = [];
+            stock = deck; waste = [];
             foundations = { '♠':[], '♥':[], '♦':[], '♣':[] };
-            win = false;
-            moves = 0;
+            win = false; moves = 0;
             document.getElementById('winMessage').innerHTML = '';
-            layoutCards();
-            drawAll();
+            layoutCards(); drawAll();
         }
 
         function layoutCards() {
-            // Foundations
-            let fx = 10, fy = 10;
+            let fx = 12, fy = 10;
             for (let s of SUITS) {
                 if (foundations[s].length) {
-                    foundations[s][foundations[s].length - 1].x = fx;
-                    foundations[s][foundations[s].length - 1].y = fy;
+                    foundations[s][foundations[s].length-1].x = fx;
+                    foundations[s][foundations[s].length-1].y = fy;
                 }
                 fx += CARD_W + 5;
             }
-            
-            // Columns
-            let cx = 10, cy = 120;
+            let cx = 12, cy = 128;
             for (let i = 0; i < 7; i++) {
                 let y = cy;
                 for (let j = 0; j < columns[i].length; j++) {
-                    columns[i][j].x = cx;
-                    columns[i][j].y = y;
+                    columns[i][j].x = cx; columns[i][j].y = y;
                     y += columns[i][j].faceUp ? 28 : 14;
                 }
                 cx += CARD_W + 5;
             }
-            
-            // Waste
             if (waste.length) {
-                let wx = 10 + 4 * (CARD_W + 5) + 15 + CARD_W + 5;
-                waste[waste.length - 1].x = wx;
-                waste[waste.length - 1].y = 10;
+                waste[waste.length-1].x = 12 + 4*(CARD_W+5) + 15 + CARD_W + 5;
+                waste[waste.length-1].y = 10;
             }
         }
 
         function drawAll() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Foundations
-            let fx = 10, fy = 10;
+            let fx = 12, fy = 10;
             for (let s of SUITS) {
-                if (foundations[s].length) {
-                    foundations[s][foundations[s].length - 1].draw();
-                } else {
-                    ctx.strokeStyle = hoverSuit === s ? '#f1c40f' : 'rgba(255,255,255,0.2)';
+                if (foundations[s].length) foundations[s][foundations[s].length-1].draw();
+                else {
+                    ctx.strokeStyle = hoverSuit === s ? '#f1c40f' : 'rgba(255,255,255,0.3)';
                     ctx.lineWidth = hoverSuit === s ? 2 : 1;
-                    ctx.setLineDash([4, 4]);
-                    ctx.strokeRect(fx, fy, CARD_W, CARD_H);
-                    ctx.setLineDash([]);
+                    ctx.setLineDash([4,4]); ctx.strokeRect(fx, fy, CARD_W, CARD_H); ctx.setLineDash([]);
                 }
                 fx += CARD_W + 5;
             }
             
-            // Stock
             let sx = fx + 15;
-            if (stock.length) {
-                ctx.fillStyle = '#2980b9';
-                ctx.fillRect(sx, fy, CARD_W, CARD_H);
-                ctx.strokeStyle = '#1a5276';
-                ctx.strokeRect(sx, fy, CARD_W, CARD_H);
-            }
+            if (stock.length) ctx.drawImage(backPattern, sx, fy);
             
-            // Waste
-            if (waste.length && !(isDragging && dragFromWaste)) {
-                waste[waste.length - 1].draw();
-            }
+            if (waste.length && !(isDragging && dragFromWaste)) waste[waste.length-1].draw();
             
-            // Columns
-            let cx = 10, cy = 120;
+            let cx = 12, cy = 128;
             for (let i = 0; i < 7; i++) {
-                // Подсветка при наведении
-                if (hoverCol === i && isDragging && dragCards.length) {
-                    ctx.fillStyle = 'rgba(241,196,15,0.15)';
-                    let lastY = cy;
-                    if (columns[i].length) {
-                        lastY = columns[i][columns[i].length - 1].y + 
-                                (columns[i][columns[i].length - 1].faceUp ? 28 : 14);
-                    }
-                    ctx.fillRect(cx - 2, cy - 2, CARD_W + 4, lastY - cy + 4);
+                if (hoverCol === i && isDragging) {
+                    ctx.fillStyle = 'rgba(241,196,15,0.2)';
+                    let lastY = columns[i].length ? columns[i][columns[i].length-1].y + 28 : cy;
+                    ctx.fillRect(cx-2, cy-2, CARD_W+4, lastY-cy+4);
                 }
-                
                 for (let j = 0; j < columns[i].length; j++) {
-                    // Пропускаем перетаскиваемые карты
-                    if (isDragging && i === dragFromCol && j >= columns[i].length - dragCards.length && !dragFromWaste) {
-                        continue;
-                    }
+                    if (isDragging && i === dragFromCol && j >= columns[i].length-dragCards.length && !dragFromWaste) continue;
                     columns[i][j].draw();
                 }
                 cx += CARD_W + 5;
             }
             
-            // Перетаскиваемые карты
             if (isDragging && dragCards.length) {
                 for (let i = 0; i < dragCards.length; i++) {
-                    dragCards[i].draw(
-                        mouseX - dragOffsetX,
-                        mouseY - dragOffsetY + i * 28,
-                        true
-                    );
+                    dragCards[i].draw(mouseX-dragOffsetX, mouseY-dragOffsetY + i*28, true);
                 }
             }
+            
+            ctx.font = '12px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText(`Ходов: ${moves}`, canvas.width - 80, canvas.height - 8);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
+        canvas.onmousedown = (e) => {
             if (win) { init(); return; }
-            
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            
-            // Stock
-            let sx = 10 + 4 * (CARD_W + 5) + 15;
-            if (mx >= sx && mx <= sx + CARD_W && my >= 10 && my <= 10 + CARD_H) {
-                if (stock.length) {
-                    waste.push(stock.pop());
-                    waste[waste.length - 1].faceUp = true;
-                } else {
-                    while (waste.length) {
-                        stock.push(waste.pop());
-                        stock[stock.length - 1].faceUp = false;
-                    }
-                }
-                layoutCards();
-                drawAll();
-                return;
+            const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+            let sx = 12 + 4*(CARD_W+5) + 15;
+            if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
+                if (stock.length) { waste.push(stock.pop()); waste[waste.length-1].faceUp = true; }
+                else while (waste.length) { stock.push(waste.pop()); stock[stock.length-1].faceUp = false; }
+                layoutCards(); drawAll(); return;
             }
-            
-            // Waste
-            if (waste.length && waste[waste.length - 1].contains(mx, my)) {
-                isDragging = true;
-                dragCards = [waste[waste.length - 1]];
-                dragFromWaste = true;
-                dragFromCol = -1;
-                dragOffsetX = mx - waste[waste.length - 1].x;
-                dragOffsetY = my - waste[waste.length - 1].y;
-                mouseX = mx;
-                mouseY = my;
-                return;
+            if (waste.length && waste[waste.length-1].contains(mx, my)) {
+                startDrag([waste[waste.length-1]], -1, true, mx, my); return;
             }
-            
-            // Columns
-            let colX = 10, colY = 120;
+            let cx = 12, cy = 128;
             for (let i = 0; i < 7; i++) {
-                for (let j = columns[i].length - 1; j >= 0; j--) {
+                for (let j = columns[i].length-1; j >= 0; j--) {
                     if (columns[i][j].faceUp && columns[i][j].contains(mx, my)) {
-                        isDragging = true;
-                        dragCards = columns[i].slice(j);
-                        dragFromCol = i;
-                        dragFromWaste = false;
-                        dragOffsetX = mx - columns[i][j].x;
-                        dragOffsetY = my - columns[i][j].y;
-                        mouseX = mx;
-                        mouseY = my;
-                        return;
+                        startDrag(columns[i].slice(j), i, false, mx, my); return;
                     }
                 }
-                colX += CARD_W + 5;
+                cx += CARD_W + 5;
             }
-        });
+        };
 
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            mouseX = e.clientX - rect.left;
-            mouseY = e.clientY - rect.top;
-            
+        function startDrag(cards, col, waste, mx, my) {
+            isDragging = true; dragCards = cards; dragFromCol = col; dragFromWaste = waste;
+            dragOffsetX = mx - cards[0].x; dragOffsetY = my - cards[0].y; mouseX = mx; mouseY = my;
+        }
+
+        canvas.onmousemove = (e) => {
+            const r = canvas.getBoundingClientRect(); mouseX = e.clientX - r.left; mouseY = e.clientY - r.top;
             if (!isDragging) return;
-            
-            // Определяем hover
-            hoverCol = -1;
-            hoverSuit = null;
-            
-            // Проверка foundation
-            let fx = 10, fy = 10;
+            hoverCol = -1; hoverSuit = null;
+            let fx = 12, fy = 10;
             for (let s of SUITS) {
-                if (mouseX >= fx && mouseX <= fx + CARD_W && 
-                    mouseY >= fy && mouseY <= fy + CARD_H) {
-                    hoverSuit = s;
-                }
+                if (mouseX >= fx && mouseX <= fx+CARD_W && mouseY >= fy && mouseY <= fy+CARD_H) hoverSuit = s;
                 fx += CARD_W + 5;
             }
-            
-            // Проверка columns
-            let colX = 10, colY = 120;
+            let cx = 12, cy = 128;
             for (let i = 0; i < 7; i++) {
-                if (mouseX >= colX && mouseX <= colX + CARD_W && mouseY >= colY) {
-                    hoverCol = i;
-                }
-                colX += CARD_W + 5;
+                if (mouseX >= cx && mouseX <= cx+CARD_W && mouseY >= cy) hoverCol = i;
+                cx += CARD_W + 5;
             }
-            
             drawAll();
-        });
+        };
 
-        canvas.addEventListener('mouseup', () => {
+        canvas.onmouseup = () => {
             if (!isDragging) return;
-            
-            // Foundation
             if (hoverSuit && dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
                 foundations[hoverSuit].push(dragCards[0]);
-                if (dragFromWaste) waste.pop();
-                else columns[dragFromCol].splice(columns[dragFromCol].length - 1);
-                if (dragFromCol >= 0 && columns[dragFromCol].length && 
-                    !columns[dragFromCol][columns[dragFromCol].length - 1].faceUp) {
-                    columns[dragFromCol][columns[dragFromCol].length - 1].faceUp = true;
+                if (dragFromWaste) waste.pop(); else columns[dragFromCol].splice(columns[dragFromCol].length-1);
+                if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                    columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                moves++; checkWin();
+            } else if (hoverCol >= 0 && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
+                if (dragFromWaste) columns[hoverCol].push(waste.pop());
+                else {
+                    const m = columns[dragFromCol].splice(columns[dragFromCol].length-dragCards.length);
+                    columns[hoverCol].push(...m);
                 }
-                moves++;
-                checkWin();
+                if (dragFromCol >= 0 && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                    columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                moves++; checkWin();
             }
-            // Column
-            else if (hoverCol >= 0 && dragCards.length && canPlaceOnColumn(dragCards[0], columns[hoverCol])) {
-                if (dragFromWaste) {
-                    columns[hoverCol].push(waste.pop());
-                } else {
-                    const moved = columns[dragFromCol].splice(columns[dragFromCol].length - dragCards.length);
-                    columns[hoverCol].push(...moved);
-                    if (columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length - 1].faceUp) {
-                        columns[dragFromCol][columns[dragFromCol].length - 1].faceUp = true;
-                    }
-                }
-                moves++;
-                checkWin();
-            }
-            
-            isDragging = false;
-            dragCards = [];
-            dragFromCol = -1;
-            dragFromWaste = false;
-            hoverCol = -1;
-            hoverSuit = null;
-            layoutCards();
-            drawAll();
-        });
+            isDragging = false; dragCards = []; dragFromCol = -1; dragFromWaste = false;
+            hoverCol = -1; hoverSuit = null; layoutCards(); drawAll();
+        };
 
-        canvas.addEventListener('dblclick', (e) => {
+        canvas.ondblclick = (e) => {
             if (win) return;
-            const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left;
-            const my = e.clientY - rect.top;
-            
+            const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
             for (let i = 0; i < 7; i++) {
-                if (columns[i].length && columns[i][columns[i].length - 1].contains(mx, my)) {
-                    const card = columns[i][columns[i].length - 1];
+                if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
+                    const card = columns[i][columns[i].length-1];
                     if (canPlaceOnFoundation(card)) {
                         foundations[card.suit].push(columns[i].pop());
-                        if (columns[i].length && !columns[i][columns[i].length - 1].faceUp) {
-                            columns[i][columns[i].length - 1].faceUp = true;
-                        }
-                        moves++;
-                        checkWin();
-                        layoutCards();
-                        drawAll();
-                        return;
+                        if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
+                            columns[i][columns[i].length-1].faceUp = true;
+                        moves++; checkWin(); layoutCards(); drawAll(); return;
                     }
                 }
             }
-        });
+        };
 
         function resize() {
-            canvas.width = Math.min(window.innerWidth - 30, 930);
-            canvas.height = Math.min(window.innerHeight - 200, 620);
+            canvas.width = Math.min(window.innerWidth - 40, 1050);
+            canvas.height = Math.min(window.innerHeight - 220, 650);
             drawAll();
         }
         window.addEventListener('resize', resize);
         resize();
 
-        function shareGame() {
-            navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!'));
-        }
+        function shareGame() { navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!')); }
 
         init();
     </script>
