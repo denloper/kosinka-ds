@@ -116,6 +116,7 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+    // звуки
     let audioCtx = null;
     function ensureAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -259,6 +260,7 @@
             }
         moves = 0; win = false; history = [];
         document.getElementById('winMessage').innerHTML = '';
+        clearDragState();
         layoutCards(); draw();
     }
 
@@ -344,6 +346,13 @@
         return true;
     }
 
+    function clearDragState() {
+        isDragging = false;
+        dragCards = [];
+        dragFromCol = -1;
+        dragFromWaste = false;
+    }
+
     function saveHistory() {
         history.push({
             stock: stock.slice(), waste: waste.slice(),
@@ -369,9 +378,11 @@
         }
     }
 
+    // Мышь
     canvas.addEventListener('mousedown', (e) => {
         if (win) return;
         const mx = e.offsetX, my = e.offsetY;
+        clearDragState();
         let stockX = 20 + 4*(CARD_W+6) + 20;
         if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
             saveHistory();
@@ -410,7 +421,6 @@
 
     canvas.addEventListener('mouseup', (e) => {
         if (!isDragging) return;
-        isDragging = false;
         const mx = e.offsetX, my = e.offsetY;
         let placed = false;
         let fx = 20, fy = 10;
@@ -420,9 +430,11 @@
                     saveHistory();
                     foundations[s].push(dragCards[0]);
                     if (dragFromWaste) waste.pop();
-                    else columns[dragFromCol].pop();
-                    if (!dragFromWaste && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
-                        columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                    else {
+                        columns[dragFromCol].pop();
+                        if (columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                            columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
+                    }
                     moves++; placed = true; playPlaceSound();
                 }
                 break;
@@ -439,9 +451,9 @@
                         else {
                             const moved = columns[dragFromCol].splice(columns[dragFromCol].length - dragCards.length);
                             columns[i].push(...moved);
+                            if (columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
+                                columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                         }
-                        if (!dragFromWaste && columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
-                            columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                         moves++; placed = true; playPlaceSound();
                     }
                     break;
@@ -449,7 +461,7 @@
                 cx += CARD_W + 8;
             }
         }
-        dragCards = []; dragFromCol = -1; dragFromWaste = false;
+        clearDragState();
         layoutCards(); draw();
         if (placed) checkWin();
     });
