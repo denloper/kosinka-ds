@@ -130,8 +130,37 @@
         }
         .modal h3 { margin-bottom: 15px; color: var(--title-color); font-size: 20px; }
         .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 15px; }
-        .theme-card { /* ... стили карточек тем ... */ }
-        .close-btn { margin-top: 10px; padding: 12px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #b0bce6; cursor: pointer; }
+        .theme-card {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            cursor: pointer; padding: 8px; border-radius: 14px; border: 2px solid transparent;
+            background: rgba(255,255,255,0.02); transition: 0.2s;
+        }
+        .theme-card:hover { border-color: var(--title-color); background: rgba(255,255,255,0.05); }
+        .theme-preview { width: 100%; aspect-ratio: 1; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .theme-label { font-size: 11px; color: var(--info-color); text-align: center; }
+        .close-btn {
+            margin-top: 10px; padding: 12px 24px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #b0bce6;
+            cursor: pointer; font-size: 15px; font-family: inherit; transition: 0.3s;
+        }
+        .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .reset-btn {
+            background: transparent; border: 1px dashed rgba(255,255,255,0.3);
+            margin-top: 8px; width: 100%; padding: 10px; font-size: 14px; color: #b0bce6; cursor: pointer;
+        }
+        #gameList { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .game-item {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between;
+            align-items: center; cursor: pointer; transition: background 0.2s;
+        }
+        .game-item:hover { background: rgba(255,255,255,0.1); }
+        .game-id { font-family: monospace; color: var(--title-color); font-weight: bold; }
+        #manualJoin { margin-top: 8px; display: flex; gap: 8px; }
+        #manualJoin input {
+            flex: 1; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -151,7 +180,6 @@
     </div>
 </div>
 
-<!-- Модальное окно темы -->
 <div class="modal" id="themeModal">
     <div class="modal-content">
         <h3>🎨 Выберите тему</h3>
@@ -161,7 +189,6 @@
     </div>
 </div>
 
-<!-- Модальное окно наблюдения -->
 <div class="modal" id="watchModal">
     <div class="modal-content">
         <h3>👁 Выберите игру для наблюдения</h3>
@@ -175,17 +202,13 @@
 </div>
 
 <script>
-// ============ НАСТРОЙКИ ============
-const WS_URL = 'wss://1e88874985e913.lhr.life';
+const WS_URL = 'wss://d298fd56f6e6ae.lhr.life';
 const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
 const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 
-// ============ ТЕМЫ (полный набор) ============
+// Все 8 тем (полный набор)
 const themes = [
-    // ... (скопируйте сюда все 8 тем из предыдущих версий, например из финального старого кода)
-    // Для краткости я не дублирую, но в реальном файле они должны быть.
-    // Пример первой темы:
     {
         name: 'Классика',
         vars: {
@@ -205,17 +228,137 @@ const themes = [
             '--modal-border': 'rgba(212, 175, 55, 0.2)'
         },
         card: {
-            faceBg: '#f2ebdc',
-            frameOuter: '#3b2e26',
-            frameInner: '#5d4a3c',
-            redText: '#8b302a',
-            blackText: '#382e26',
-            backColor: '#0f1e36',
-            backBorder: '#ebc25e',
-            backPattern: '#d4af37'
+            faceBg: '#f2ebdc', frameOuter: '#3b2e26', frameInner: '#5d4a3c',
+            redText: '#8b302a', blackText: '#382e26', backColor: '#0f1e36',
+            backBorder: '#ebc25e', backPattern: '#d4af37'
         }
     },
-    // ... остальные 7 тем
+    {
+        name: 'Изумруд',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 30% 70%, #0d4d3c 0%, #051a14 100%)',
+            '--game-bg': 'rgba(14, 40, 35, 0.5)', '--game-border': 'rgba(0, 200, 150, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(0, 30, 20, 0.8)', '--canvas-bg': '#0a2a22',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 50, 30, 0.4)',
+            '--button-bg': 'rgba(20, 60, 45, 0.6)', '--button-border': 'rgba(0, 200, 150, 0.3)',
+            '--button-hover-bg': 'rgba(0, 200, 150, 0.15)', '--title-color': '#7ed4b5',
+            '--info-color': '#8fbcac', '--win-color': '#7ed4b5', '--modal-bg': '#0e2822',
+            '--modal-border': 'rgba(0, 200, 150, 0.25)'
+        },
+        card: {
+            faceBg: '#e6f0e6', frameOuter: '#1f4a2c', frameInner: '#2d5a38',
+            redText: '#a04040', blackText: '#1e3a2a', backColor: '#0a2a1a',
+            backBorder: '#5ab88c', backPattern: '#7ed4b5'
+        }
+    },
+    {
+        name: 'Закат',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)',
+            '--game-bg': 'rgba(50, 15, 15, 0.5)', '--game-border': 'rgba(255, 120, 80, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(80, 20, 10, 0.7)', '--canvas-bg': '#3b1818',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 10, 0, 0.4)',
+            '--button-bg': 'rgba(80, 30, 30, 0.6)', '--button-border': 'rgba(255, 120, 80, 0.3)',
+            '--button-hover-bg': 'rgba(255, 120, 80, 0.15)', '--title-color': '#f4a261',
+            '--info-color': '#e0a88a', '--win-color': '#f4a261', '--modal-bg': '#3b1e1e',
+            '--modal-border': 'rgba(255, 120, 80, 0.25)'
+        },
+        card: {
+            faceBg: '#f5e6d3', frameOuter: '#7b3a2a', frameInner: '#a0523e',
+            redText: '#b33a2a', blackText: '#4a2a1a', backColor: '#5e1e1e',
+            backBorder: '#f4a261', backPattern: '#e76f51'
+        }
+    },
+    {
+        name: 'Лаванда',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 40% 60%, #4a2d6b 0%, #1a0a2e 100%)',
+            '--game-bg': 'rgba(30, 15, 45, 0.5)', '--game-border': 'rgba(180, 130, 255, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(40, 10, 60, 0.7)', '--canvas-bg': '#221833',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(50, 0, 80, 0.4)',
+            '--button-bg': 'rgba(60, 35, 85, 0.6)', '--button-border': 'rgba(180, 130, 255, 0.3)',
+            '--button-hover-bg': 'rgba(180, 130, 255, 0.15)', '--title-color': '#c9a0ff',
+            '--info-color': '#b8a0d0', '--win-color': '#c9a0ff', '--modal-bg': '#1e1630',
+            '--modal-border': 'rgba(180, 130, 255, 0.25)'
+        },
+        card: {
+            faceBg: '#f0e6f6', frameOuter: '#4a2d6b', frameInner: '#6b4a8a',
+            redText: '#8b3050', blackText: '#2a1a3a', backColor: '#2e1a4a',
+            backBorder: '#c9a0ff', backPattern: '#b38fd9'
+        }
+    },
+    {
+        name: 'Океан',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)',
+            '--game-bg': 'rgba(10, 30, 40, 0.5)', '--game-border': 'rgba(70, 180, 210, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(0, 40, 60, 0.7)', '--canvas-bg': '#0e2933',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 80, 120, 0.4)',
+            '--button-bg': 'rgba(20, 60, 80, 0.6)', '--button-border': 'rgba(70, 180, 210, 0.3)',
+            '--button-hover-bg': 'rgba(70, 180, 210, 0.15)', '--title-color': '#7ec8e3',
+            '--info-color': '#8fbcc8', '--win-color': '#7ec8e3', '--modal-bg': '#0c2028',
+            '--modal-border': 'rgba(70, 180, 210, 0.25)'
+        },
+        card: {
+            faceBg: '#e0f0f5', frameOuter: '#1a4050', frameInner: '#2a6070',
+            redText: '#a04040', blackText: '#1a3030', backColor: '#0a2030',
+            backBorder: '#7ec8e3', backPattern: '#46b8d8'
+        }
+    },
+    {
+        name: 'Золото',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)',
+            '--game-bg': 'rgba(35, 25, 10, 0.5)', '--game-border': 'rgba(255, 210, 80, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(60, 40, 5, 0.7)', '--canvas-bg': '#2e2518',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 60, 0, 0.4)',
+            '--button-bg': 'rgba(70, 55, 30, 0.6)', '--button-border': 'rgba(255, 210, 80, 0.3)',
+            '--button-hover-bg': 'rgba(255, 210, 80, 0.15)', '--title-color': '#f4d03f',
+            '--info-color': '#c9b86c', '--win-color': '#f4d03f', '--modal-bg': '#2a1f10',
+            '--modal-border': 'rgba(255, 210, 80, 0.25)'
+        },
+        card: {
+            faceBg: '#fdf5e6', frameOuter: '#8a6d3b', frameInner: '#b8965c',
+            redText: '#8b3020', blackText: '#3e2e1a', backColor: '#3e2a0a',
+            backBorder: '#f4d03f', backPattern: '#d4a017'
+        }
+    },
+    {
+        name: 'Вишня',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 70% 40%, #8b2a3a 0%, #2d0a10 100%)',
+            '--game-bg': 'rgba(40, 15, 20, 0.5)', '--game-border': 'rgba(255, 90, 120, 0.2)',
+            '--game-shadow': '0 20px 60px rgba(70, 10, 20, 0.7)', '--canvas-bg': '#2b181e',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(90, 0, 20, 0.4)',
+            '--button-bg': 'rgba(70, 30, 40, 0.6)', '--button-border': 'rgba(255, 90, 120, 0.3)',
+            '--button-hover-bg': 'rgba(255, 90, 120, 0.15)', '--title-color': '#ff8fa0',
+            '--info-color': '#d89aa0', '--win-color': '#ff8fa0', '--modal-bg': '#2b1a20',
+            '--modal-border': 'rgba(255, 90, 120, 0.25)'
+        },
+        card: {
+            faceBg: '#fce4ec', frameOuter: '#8b2a3a', frameInner: '#b04550',
+            redText: '#8b2a3a', blackText: '#3a1a20', backColor: '#5e1a28',
+            backBorder: '#ff8fa0', backPattern: '#e5737c'
+        }
+    },
+    {
+        name: 'Полночь',
+        vars: {
+            '--body-bg': 'radial-gradient(circle at 10% 20%, #0a0f1a 0%, #020408 100%)',
+            '--game-bg': 'rgba(10, 14, 22, 0.5)', '--game-border': 'rgba(100, 120, 180, 0.15)',
+            '--game-shadow': '0 20px 60px rgba(0,0,0,0.9)', '--canvas-bg': '#090d16',
+            '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.9), 0 8px 32px rgba(0,0,0,0.8)',
+            '--button-bg': 'rgba(20, 28, 45, 0.6)', '--button-border': 'rgba(100, 120, 180, 0.3)',
+            '--button-hover-bg': 'rgba(100, 120, 180, 0.15)', '--title-color': '#a0b4e0',
+            '--info-color': '#7a8aaa', '--win-color': '#a0b4e0', '--modal-bg': '#0d1220',
+            '--modal-border': 'rgba(100, 120, 180, 0.25)'
+        },
+        card: {
+            faceBg: '#d0d8e8', frameOuter: '#1a2a40', frameInner: '#3a4a60',
+            redText: '#804060', blackText: '#101828', backColor: '#0a1020',
+            backBorder: '#a0b4e0', backPattern: '#7088b0'
+        }
+    }
 ];
 
 let cardColors = themes[0].card;
@@ -235,7 +378,19 @@ function ensureAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 }
-function playTone(freq, duration, type = 'sine', vol = 0.1) { /* ... реализация ... */ }
+function playTone(freq, duration, type = 'sine', vol = 0.1) {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
 function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
 function playWin() {
     ensureAudio();
@@ -260,6 +415,7 @@ function connect() {
     };
     ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
+        if (data.type === 'ping') return;
         if (data.type === 'state') {
             gameState = data.state;
             document.getElementById('status').textContent = 'Игра загружена';
@@ -268,10 +424,13 @@ function connect() {
         } else if (data.type === 'error') {
             document.getElementById('status').textContent = 'Ошибка: ' + data.message;
         } else if (data.type === 'hint') {
-            alert(data.hint ? 'Подсказка: ...' : 'Нет доступных ходов');
+            alert(data.hint ? `Подсказка: переместите карту(ы) из ${JSON.stringify(data.hint.from)} в ${JSON.stringify(data.hint.to)}` : 'Нет доступных ходов');
         }
     };
-    ws.onclose = () => { document.getElementById('status').textContent = 'Соединение закрыто, переподключение...'; setTimeout(connect, 3000); };
+    ws.onclose = () => {
+        document.getElementById('status').textContent = 'Соединение закрыто, переподключение...';
+        setTimeout(connect, 3000);
+    };
     ws.onerror = () => document.getElementById('status').textContent = 'Ошибка подключения к серверу';
 }
 
@@ -280,23 +439,152 @@ function sendAction(action, payload = {}) {
     ws.send(JSON.stringify({ action, ...payload }));
 }
 
-// ============ ОТРИСОВКА (винтажный стиль) ============
-function generateBackPattern() { /* генерация рубашки как в старом коде */ }
+// ============ ОТРИСОВКА ============
 let backPattern = document.createElement('canvas');
+function generateBackPattern() {
+    backPattern.width = CARD_W * dpr;
+    backPattern.height = CARD_H * dpr;
+    const bctx = backPattern.getContext('2d');
+    bctx.scale(dpr, dpr);
+    bctx.fillStyle = cardColors.backColor;
+    bctx.fillRect(0, 0, CARD_W, CARD_H);
+    bctx.strokeStyle = cardColors.backBorder;
+    bctx.lineWidth = 1.8;
+    bctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+    bctx.fillStyle = cardColors.backPattern;
+    const sp = 22, ox = (CARD_W % sp)/2, oy = (CARD_H % sp)/2;
+    for (let x = ox+sp/2; x < CARD_W-ox; x += sp)
+        for (let y = oy+sp/2; y < CARD_H-oy; y += sp) {
+            bctx.beginPath(); bctx.arc(x, y, 3.5, 0, Math.PI*2); bctx.fill();
+        }
+    bctx.setTransform(1,0,0,1,0,0);
+}
 generateBackPattern();
 
 function draw() {
     if (!gameState) return;
-    // ... отрисовка с использованием cardColors, как в старом клиенте
-    // включая фонды, сток, отвал, столбцы, подсветку подсказок
+    canvas.width = Math.min(1100, window.innerWidth-20);
+    canvas.height = Math.min(700, window.innerHeight-100);
+    canvas.style.width = canvas.width + 'px';
+    canvas.style.height = canvas.height + 'px';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Фонды
+    let x = 20, y = 10;
+    for (let s of SUITS) {
+        const f = gameState.foundations[s];
+        ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+        ctx.strokeRect(x, y, CARD_W, CARD_H); ctx.setLineDash([]);
+        if (f.length) drawCard(f[0], x, y);
+        x += CARD_W + 6;
+    }
+    // Сток и отвал
+    let stockX = 20 + 4*(CARD_W+6) + 20;
+    ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+    ctx.strokeRect(stockX, 10, CARD_W, CARD_H); ctx.setLineDash([]);
+    if (gameState.stock_count > 0) drawCardBack(stockX, 10);
+    if (gameState.waste.length) drawCard(gameState.waste[0], stockX + CARD_W + 12, 10);
+
+    // Столбцы
+    let cx = 20, cy = 150;
+    for (let col of gameState.columns) {
+        if (col.length === 0) {
+            ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+            ctx.strokeRect(cx, cy, CARD_W, CARD_H); ctx.setLineDash([]);
+        }
+        for (let i = 0; i < col.length; i++) {
+            const card = col[i];
+            card.x = cx; card.y = cy + i*CARD_OVERLAP;
+            if (!dragCards.includes(card)) drawCard(card, card.x, card.y);
+        }
+        cx += CARD_W + 9;
+    }
+    // Перетаскиваемые карты
+    if (drag && dragCards.length) {
+        for (let i = 0; i < dragCards.length; i++) {
+            drawCard(dragCards[i], mouseX - drag.offsetX + i*2, mouseY - drag.offsetY + i*2);
+        }
+    }
+    ctx.font = '14px Georgia'; ctx.fillStyle = '#ddd';
+    ctx.fillText(`Ходов: ${gameState.moves}`, canvas.width-100, canvas.height-10);
 }
 
-// ============ УПРАВЛЕНИЕ МЫШЬЮ (offsetX/Y) ============
+function drawCard(card, x, y) {
+    if (!card.face_up) return drawCardBack(x, y);
+    ctx.fillStyle = cardColors.faceBg;
+    ctx.fillRect(x, y, CARD_W, CARD_H);
+    ctx.strokeStyle = cardColors.frameOuter; ctx.lineWidth = 1.4;
+    ctx.strokeRect(x+1, y+1, CARD_W-2, CARD_H-2);
+    ctx.strokeStyle = cardColors.frameInner; ctx.lineWidth = 0.6;
+    ctx.strokeRect(x+5, y+5, CARD_W-10, CARD_H-10);
+    ctx.fillStyle = (card.suit==='♥'||card.suit==='♦') ? cardColors.redText : cardColors.blackText;
+    ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, x+12, y+22);
+    ctx.font = '14px Georgia'; ctx.fillText(card.suit, x+12, y+38);
+    ctx.save(); ctx.translate(x+CARD_W-18, y+CARD_H-18); ctx.rotate(Math.PI);
+    ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, 0, 0);
+    ctx.font = '14px Georgia'; ctx.fillText(card.suit, 0, 17);
+    ctx.restore();
+    ctx.globalAlpha = 0.35; ctx.font = '48px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(card.suit, x+CARD_W/2, y+CARD_H/2);
+    ctx.textAlign = 'start'; ctx.globalAlpha = 1;
+    if (['J','Q','K'].includes(card.rank)) {
+        ctx.beginPath(); ctx.ellipse(x+CARD_W/2, y+CARD_H/2, 22, 30, 0, 0, Math.PI*2);
+        ctx.strokeStyle = cardColors.backBorder; ctx.lineWidth = 1.6; ctx.stroke();
+        ctx.fillStyle = cardColors.backPattern.replace(')', ', 0.1)').replace('rgba','rgba'); ctx.fill();
+    }
+}
+
+function drawCardBack(x, y) {
+    ctx.fillStyle = cardColors.backColor;
+    ctx.fillRect(x, y, CARD_W, CARD_H);
+    ctx.strokeStyle = cardColors.backBorder; ctx.lineWidth = 1.8;
+    ctx.strokeRect(x+4, y+4, CARD_W-8, CARD_H-8);
+    ctx.fillStyle = cardColors.backPattern;
+    const sp = 22, ox = (CARD_W % sp)/2, oy = (CARD_H % sp)/2;
+    for (let i = ox+sp/2; i < CARD_W-ox; i += sp)
+        for (let j = oy+sp/2; j < CARD_H-oy; j += sp) {
+            ctx.beginPath(); ctx.arc(x+i, y+j, 3.5, 0, Math.PI*2); ctx.fill();
+        }
+}
+
+// ============ УПРАВЛЕНИЕ МЫШЬЮ ============
 canvas.addEventListener('mousedown', (e) => {
     if (!gameState || isWatcher) return;
     const mx = e.offsetX, my = e.offsetY;
-    // ... логика захвата карт
+    let stockX = 20 + 4*(CARD_W+6) + 20;
+    if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
+        sendAction('click_stock'); return;
+    }
+    if (gameState.waste.length) {
+        let wx = stockX+CARD_W+12, wy = 10;
+        if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
+            const card = gameState.waste[0]; card.x = wx; card.y = wy;
+            startDrag([card], -1, true, mx, my); return;
+        }
+    }
+    let cx = 20, cy = 150;
+    for (let i = 0; i < gameState.columns.length; i++) {
+        const col = gameState.columns[i];
+        for (let j = col.length-1; j >= 0; j--) {
+            const card = col[j];
+            if (!card.face_up) break;
+            const cardY = cy + j*CARD_OVERLAP;
+            if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                const group = col.slice(j);
+                if (group.length) { group[0].x = cx; group[0].y = cardY; }
+                startDrag(group, i, false, mx, my); return;
+            }
+        }
+        cx += CARD_W + 9;
+    }
 });
+
+function startDrag(cards, col, waste, mx, my) {
+    drag = { cards, col, waste, offsetX: mx - cards[0].x, offsetY: my - cards[0].y };
+    dragCards = cards; fromCol = col; fromWaste = waste;
+    mouseX = mx; mouseY = my;
+    draw();
+}
 
 canvas.addEventListener('mousemove', (e) => {
     if (!drag) return;
@@ -306,19 +594,111 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseup', (e) => {
     if (!drag) return;
-    // ... определение цели и отправка хода
-    if (placed) playPlace();
+    const mx = e.offsetX, my = e.offsetY;
+    let targetType = null, targetIndex = null, targetSuit = null;
+    let fx = 20, fy = 10;
+    for (let s of SUITS) {
+        if (mx >= fx && mx <= fx+CARD_W && my >= fy && my <= fy+CARD_H) { targetType = 'foundation'; targetSuit = s; break; }
+        fx += CARD_W + 6;
+    }
+    if (!targetType) {
+        let cx = 20, cy = 150;
+        for (let i = 0; i < 7; i++) {
+            if (mx >= cx && mx <= cx+CARD_W && my >= cy) { targetType = 'column'; targetIndex = i; break; }
+            cx += CARD_W + 9;
+        }
+    }
+    if (targetType) {
+        sendAction('move', {
+            from: fromWaste ? { type: 'waste' } : { type: 'column', index: fromCol },
+            card_count: dragCards.length,
+            to: targetType === 'foundation' ? { type: 'foundation', suit: targetSuit } : { type: 'column', index: targetIndex }
+        });
+        playPlace();
+    }
+    drag = null; dragCards = [];
+    draw();
 });
 
 canvas.addEventListener('dblclick', (e) => {
     if (!gameState || isWatcher) return;
-    // ... авто-перемещение на фундамент
+    const mx = e.offsetX, my = e.offsetY;
+    let cx = 20, cy = 150;
+    for (let i = 0; i < gameState.columns.length; i++) {
+        const col = gameState.columns[i];
+        if (col.length) {
+            const card = col[col.length-1];
+            const cardY = cy + (col.length-1)*CARD_OVERLAP;
+            if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                sendAction('auto_move', { from: { type: 'column', index: i } }); return;
+            }
+        }
+        cx += CARD_W + 9;
+    }
+    let stockX = 20 + 4*(CARD_W+6) + 20;
+    let wx = stockX+CARD_W+12, wy = 10;
+    if (gameState.waste.length && mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
+        sendAction('auto_move', { from: { type: 'waste' } });
+    }
 });
 
-// ============ ТЕМЫ И МОДАЛЬНЫЕ ОКНА ============
-// ... функции applyTheme, loadTheme, showThemePicker и т.д.
+// ============ ТЕМЫ ============
+function applyTheme(t) {
+    const root = document.documentElement;
+    Object.entries(t.vars).forEach(([k,v]) => root.style.setProperty(k,v));
+    cardColors = { ...t.card };
+    generateBackPattern();
+    draw();
+}
+function loadTheme() {
+    const saved = localStorage.getItem('solitaire_theme');
+    if (saved) { const i = parseInt(saved); if (i>=0 && i<themes.length) { applyTheme(themes[i]); return; } }
+    applyTheme(themes[0]);
+}
+function saveThemeIndex(i) { localStorage.setItem('solitaire_theme', i); }
+function resetTheme() { applyTheme(themes[0]); saveThemeIndex(0); closeThemePicker(); }
+function showThemePicker() {
+    const grid = document.getElementById('themeGrid'); grid.innerHTML = '';
+    themes.forEach((t,i) => {
+        const d = document.createElement('div'); d.className = 'theme-card';
+        d.innerHTML = `<div class="theme-preview" style="background:${t.vars['--body-bg']}"></div><div class="theme-label">${t.name}</div>`;
+        d.onclick = () => { applyTheme(t); saveThemeIndex(i); closeThemePicker(); };
+        grid.appendChild(d);
+    });
+    document.getElementById('themeModal').classList.add('show');
+}
+function closeThemePicker() { document.getElementById('themeModal').classList.remove('show'); }
+document.getElementById('themeModal').addEventListener('click', (e) => { if (e.target === document.getElementById('themeModal')) closeThemePicker(); });
 
-// ============ ЗАПУСК ============
+// ============ МОДАЛЬНОЕ ОКНО НАБЛЮДЕНИЯ ============
+let watchListWs = null;
+function openWatchModal() {
+    document.getElementById('watchModal').classList.add('show');
+    document.getElementById('gameList').innerHTML = 'Поиск активных игр...';
+    if (watchListWs) { watchListWs.close(); watchListWs = null; }
+    watchListWs = new WebSocket(WS_URL);
+    watchListWs.onopen = () => watchListWs.send(JSON.stringify({ action: 'list' }));
+    watchListWs.onmessage = (e) => {
+        try {
+            const d = JSON.parse(e.data);
+            if (d.type === 'game_list') {
+                const games = d.games || [];
+                const listDiv = document.getElementById('gameList');
+                if (!games.length) listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр.</p>';
+                else if (games.length === 1) { closeWatchModal(); window.location.href = `?game=${games[0].id}&watch=true`; }
+                else listDiv.innerHTML = games.map(g => `<div class="game-item" onclick="watchGameById('${g.id}')"><span>Игра <span class="game-id">${g.id}</span></span><span style="font-size:12px;color:#8d98b0;">👁 ${g.spectators||0}</span></div>`).join('');
+            }
+        } catch { document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список не загружен.</p>'; }
+    };
+}
+function closeWatchModal() { document.getElementById('watchModal').classList.remove('show'); if (watchListWs) watchListWs.close(); }
+function watchGameById(id) { closeWatchModal(); window.location.href = `?game=${id}&watch=true`; }
+function joinManualGame() { const id = document.getElementById('manualGameId').value.trim(); if (id) watchGameById(id); }
+document.getElementById('watchModal').addEventListener('click', (e) => { if (e.target === document.getElementById('watchModal')) closeWatchModal(); });
+function shareGame() { if (gameId) navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!')); else alert('Создайте игру через /solitaire'); }
+
+// ============ СТАРТ ============
+loadTheme();
 connect();
 </script>
 </body>
