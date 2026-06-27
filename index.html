@@ -35,6 +35,7 @@
         const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
         let gameState = null, gameId = null, ws = null, isHost = true;
+        let isWatcher = false;   // ← глобальная переменная
         let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
         let mouseX = 0, mouseY = 0;
 
@@ -47,10 +48,12 @@
             const paramGameId = urlParams.get('game');
             gameId = paramGameId || Math.random().toString(36).substr(2, 6);
 
+            isWatcher = paramGameId && urlParams.has('watch');   // устанавливаем режим наблюдателя
+
             ws = new WebSocket(WS_URL);
             ws.onopen = () => {
                 document.getElementById('status').textContent = 'Подключено, загрузка игры...';
-                if (paramGameId && urlParams.has('watch')) {
+                if (isWatcher) {
                     isHost = false;
                     ws.send(JSON.stringify({ action: 'join', game_id: gameId }));
                 } else {
@@ -178,7 +181,7 @@
                 }
         }
 
-        // ===== Управление мышью (используем offsetX/offsetY) =====
+        // ===== Управление мышью =====
         canvas.addEventListener('mousedown', (e) => {
             if (!gameState || isWatcher) return;
             const mx = e.offsetX, my = e.offsetY;
