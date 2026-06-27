@@ -253,7 +253,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно выбора темы -->
     <div class="modal" id="themeModal">
         <div class="modal-content">
             <h3>🎨 Выберите тему</h3>
@@ -263,11 +262,10 @@
         </div>
     </div>
 
-    <!-- Модальное окно просмотра игр -->
     <div class="modal" id="watchModal">
         <div class="modal-content">
             <h3>👁 Выберите игру для наблюдения</h3>
-            <div id="gameList">Загрузка списка игр...</div>
+            <div id="gameList">Поиск активных игр...</div>
             <div id="manualJoin">
                 <input type="text" id="manualGameId" placeholder="Введите ID игры">
                 <button onclick="joinManualGame()">▶ Смотреть</button>
@@ -315,7 +313,209 @@
                     backPattern: '#d4af37'
                 }
             },
-            // ... (остальные темы полностью как в предыдущей версии)
+            {
+                name: 'Изумруд',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 30% 70%, #0d4d3c 0%, #051a14 100%)',
+                    '--game-bg': 'rgba(14, 40, 35, 0.5)',
+                    '--game-border': 'rgba(0, 200, 150, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 30, 20, 0.8)',
+                    '--canvas-bg': '#0a2a22',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 50, 30, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 45, 0.6)',
+                    '--button-border': 'rgba(0, 200, 150, 0.3)',
+                    '--button-hover-bg': 'rgba(0, 200, 150, 0.15)',
+                    '--title-color': '#7ed4b5',
+                    '--info-color': '#8fbcac',
+                    '--win-color': '#7ed4b5',
+                    '--modal-bg': '#0e2822',
+                    '--modal-border': 'rgba(0, 200, 150, 0.25)'
+                },
+                card: {
+                    faceBg: '#e6f0e6',
+                    frameOuter: '#1f4a2c',
+                    frameInner: '#2d5a38',
+                    redText: '#a04040',
+                    blackText: '#1e3a2a',
+                    backColor: '#0a2a1a',
+                    backBorder: '#5ab88c',
+                    backPattern: '#7ed4b5'
+                }
+            },
+            {
+                name: 'Закат',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 80% 50%, #b94e48 0%, #2d0a0a 100%)',
+                    '--game-bg': 'rgba(50, 15, 15, 0.5)',
+                    '--game-border': 'rgba(255, 120, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(80, 20, 10, 0.7)',
+                    '--canvas-bg': '#3b1818',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 10, 0, 0.4)',
+                    '--button-bg': 'rgba(80, 30, 30, 0.6)',
+                    '--button-border': 'rgba(255, 120, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 120, 80, 0.15)',
+                    '--title-color': '#f4a261',
+                    '--info-color': '#e0a88a',
+                    '--win-color': '#f4a261',
+                    '--modal-bg': '#3b1e1e',
+                    '--modal-border': 'rgba(255, 120, 80, 0.25)'
+                },
+                card: {
+                    faceBg: '#f5e6d3',
+                    frameOuter: '#7b3a2a',
+                    frameInner: '#a0523e',
+                    redText: '#b33a2a',
+                    blackText: '#4a2a1a',
+                    backColor: '#5e1e1e',
+                    backBorder: '#f4a261',
+                    backPattern: '#e76f51'
+                }
+            },
+            {
+                name: 'Лаванда',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 40% 60%, #4a2d6b 0%, #1a0a2e 100%)',
+                    '--game-bg': 'rgba(30, 15, 45, 0.5)',
+                    '--game-border': 'rgba(180, 130, 255, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(40, 10, 60, 0.7)',
+                    '--canvas-bg': '#221833',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(50, 0, 80, 0.4)',
+                    '--button-bg': 'rgba(60, 35, 85, 0.6)',
+                    '--button-border': 'rgba(180, 130, 255, 0.3)',
+                    '--button-hover-bg': 'rgba(180, 130, 255, 0.15)',
+                    '--title-color': '#c9a0ff',
+                    '--info-color': '#b8a0d0',
+                    '--win-color': '#c9a0ff',
+                    '--modal-bg': '#1e1630',
+                    '--modal-border': 'rgba(180, 130, 255, 0.25)'
+                },
+                card: {
+                    faceBg: '#f0e6f6',
+                    frameOuter: '#4a2d6b',
+                    frameInner: '#6b4a8a',
+                    redText: '#8b3050',
+                    blackText: '#2a1a3a',
+                    backColor: '#2e1a4a',
+                    backBorder: '#c9a0ff',
+                    backPattern: '#b38fd9'
+                }
+            },
+            {
+                name: 'Океан',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 0%, #1e5f74 0%, #0a151a 100%)',
+                    '--game-bg': 'rgba(10, 30, 40, 0.5)',
+                    '--game-border': 'rgba(70, 180, 210, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(0, 40, 60, 0.7)',
+                    '--canvas-bg': '#0e2933',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(0, 80, 120, 0.4)',
+                    '--button-bg': 'rgba(20, 60, 80, 0.6)',
+                    '--button-border': 'rgba(70, 180, 210, 0.3)',
+                    '--button-hover-bg': 'rgba(70, 180, 210, 0.15)',
+                    '--title-color': '#7ec8e3',
+                    '--info-color': '#8fbcc8',
+                    '--win-color': '#7ec8e3',
+                    '--modal-bg': '#0c2028',
+                    '--modal-border': 'rgba(70, 180, 210, 0.25)'
+                },
+                card: {
+                    faceBg: '#e0f0f5',
+                    frameOuter: '#1a4050',
+                    frameInner: '#2a6070',
+                    redText: '#a04040',
+                    blackText: '#1a3030',
+                    backColor: '#0a2030',
+                    backBorder: '#7ec8e3',
+                    backPattern: '#46b8d8'
+                }
+            },
+            {
+                name: 'Золото',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 50% 50%, #8a6d3b 0%, #1f1400 100%)',
+                    '--game-bg': 'rgba(35, 25, 10, 0.5)',
+                    '--game-border': 'rgba(255, 210, 80, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(60, 40, 5, 0.7)',
+                    '--canvas-bg': '#2e2518',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(80, 60, 0, 0.4)',
+                    '--button-bg': 'rgba(70, 55, 30, 0.6)',
+                    '--button-border': 'rgba(255, 210, 80, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 210, 80, 0.15)',
+                    '--title-color': '#f4d03f',
+                    '--info-color': '#c9b86c',
+                    '--win-color': '#f4d03f',
+                    '--modal-bg': '#2a1f10',
+                    '--modal-border': 'rgba(255, 210, 80, 0.25)'
+                },
+                card: {
+                    faceBg: '#fdf5e6',
+                    frameOuter: '#8a6d3b',
+                    frameInner: '#b8965c',
+                    redText: '#8b3020',
+                    blackText: '#3e2e1a',
+                    backColor: '#3e2a0a',
+                    backBorder: '#f4d03f',
+                    backPattern: '#d4a017'
+                }
+            },
+            {
+                name: 'Вишня',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 70% 40%, #8b2a3a 0%, #2d0a10 100%)',
+                    '--game-bg': 'rgba(40, 15, 20, 0.5)',
+                    '--game-border': 'rgba(255, 90, 120, 0.2)',
+                    '--game-shadow': '0 20px 60px rgba(70, 10, 20, 0.7)',
+                    '--canvas-bg': '#2b181e',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.8), 0 8px 32px rgba(90, 0, 20, 0.4)',
+                    '--button-bg': 'rgba(70, 30, 40, 0.6)',
+                    '--button-border': 'rgba(255, 90, 120, 0.3)',
+                    '--button-hover-bg': 'rgba(255, 90, 120, 0.15)',
+                    '--title-color': '#ff8fa0',
+                    '--info-color': '#d89aa0',
+                    '--win-color': '#ff8fa0',
+                    '--modal-bg': '#2b1a20',
+                    '--modal-border': 'rgba(255, 90, 120, 0.25)'
+                },
+                card: {
+                    faceBg: '#fce4ec',
+                    frameOuter: '#8b2a3a',
+                    frameInner: '#b04550',
+                    redText: '#8b2a3a',
+                    blackText: '#3a1a20',
+                    backColor: '#5e1a28',
+                    backBorder: '#ff8fa0',
+                    backPattern: '#e5737c'
+                }
+            },
+            {
+                name: 'Полночь',
+                vars: {
+                    '--body-bg': 'radial-gradient(circle at 10% 20%, #0a0f1a 0%, #020408 100%)',
+                    '--game-bg': 'rgba(10, 14, 22, 0.5)',
+                    '--game-border': 'rgba(100, 120, 180, 0.15)',
+                    '--game-shadow': '0 20px 60px rgba(0,0,0,0.9)',
+                    '--canvas-bg': '#090d16',
+                    '--canvas-shadow': 'inset 0 0 30px rgba(0,0,0,0.9), 0 8px 32px rgba(0,0,0,0.8)',
+                    '--button-bg': 'rgba(20, 28, 45, 0.6)',
+                    '--button-border': 'rgba(100, 120, 180, 0.3)',
+                    '--button-hover-bg': 'rgba(100, 120, 180, 0.15)',
+                    '--title-color': '#a0b4e0',
+                    '--info-color': '#7a8aaa',
+                    '--win-color': '#a0b4e0',
+                    '--modal-bg': '#0d1220',
+                    '--modal-border': 'rgba(100, 120, 180, 0.25)'
+                },
+                card: {
+                    faceBg: '#d0d8e8',
+                    frameOuter: '#1a2a40',
+                    frameInner: '#3a4a60',
+                    redText: '#804060',
+                    blackText: '#101828',
+                    backColor: '#0a1020',
+                    backBorder: '#a0b4e0',
+                    backPattern: '#7088b0'
+                }
+            }
         ];
 
         let cardColors = { ...themes[0].card };
@@ -715,20 +915,33 @@
             }
         }
 
+        function getCanvasSizes() {
+            const cvs = document.getElementById('canvas');
+            const rect = cvs.getBoundingClientRect();
+            return {
+                logicalWidth: Math.min(window.innerWidth - 40, 1120),
+                logicalHeight: Math.min(window.innerHeight - 250, 700),
+                rectWidth: rect.width,
+                rectHeight: rect.height
+            };
+        }
+
         function drawAll() {
             const cvs = document.getElementById('canvas');
             const ctx = cvs.getContext('2d');
-            const displayWidth = Math.min(window.innerWidth - 40, 1120);
-            const displayHeight = Math.min(window.innerHeight - 250, 700);
-            cvs.width = displayWidth * dpr;
-            cvs.height = displayHeight * dpr;
-            cvs.style.width = displayWidth + 'px';
-            cvs.style.height = displayHeight + 'px';
+            const sizes = getCanvasSizes();
+            const logicalWidth = sizes.logicalWidth;
+            const logicalHeight = sizes.logicalHeight;
+
+            cvs.width = logicalWidth * dpr;
+            cvs.height = logicalHeight * dpr;
+            cvs.style.width = logicalWidth + 'px';
+            cvs.style.height = logicalHeight + 'px';
             ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.scale(dpr, dpr);
             ctx.imageSmoothingEnabled = true;
             
-            ctx.clearRect(0, 0, displayWidth, displayHeight);
+            ctx.clearRect(0, 0, logicalWidth, logicalHeight);
             
             let fx = 12, fy = 10;
             for (let s of SUITS) {
@@ -801,9 +1014,9 @@
             
             ctx.font = '14px Georgia, serif';
             ctx.fillStyle = 'rgba(141, 152, 176, 0.6)';
-            ctx.fillText(`Ходов: ${moves}`, displayWidth - 90, displayHeight - 10);
+            ctx.fillText(`Ходов: ${moves}`, logicalWidth - 90, logicalHeight - 10);
             if (isWatcher || spectatorsCount > 0) {
-                ctx.fillText(`👁 ${spectatorsCount}`, displayWidth - 180, displayHeight - 10);
+                ctx.fillText(`👁 ${spectatorsCount}`, logicalWidth - 180, logicalHeight - 10);
             }
         }
 
@@ -833,8 +1046,9 @@
             if (isWatcher) return;
             clearHint();
             const r = canvas.getBoundingClientRect();
-            const mx = (e.clientX - r.left) * (displayWidth / r.width);
-            const my = (e.clientY - r.top) * (displayHeight / r.height);
+            const sizes = getCanvasSizes();
+            const mx = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
+            const my = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
             
             let sx = 12 + 4*(CARD_W+6) + 18;
             if (mx >= sx && mx <= sx+CARD_W && my >= 10 && my <= 10+CARD_H) {
@@ -890,8 +1104,9 @@
 
         canvas.onmousemove = (e) => {
             const r = canvas.getBoundingClientRect();
-            mouseX = (e.clientX - r.left) * (displayWidth / r.width);
-            mouseY = (e.clientY - r.top) * (displayHeight / r.height);
+            const sizes = getCanvasSizes();
+            mouseX = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
+            mouseY = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
             if (!isDragging) return;
             
             hoverCol = -1;
@@ -955,8 +1170,9 @@
             if (win || isWatcher) return;
             clearHint();
             const r = canvas.getBoundingClientRect();
-            const mx = (e.clientX - r.left) * (displayWidth / r.width);
-            const my = (e.clientY - r.top) * (displayHeight / r.height);
+            const sizes = getCanvasSizes();
+            const mx = (e.clientX - r.left) * (sizes.logicalWidth / sizes.rectWidth);
+            const my = (e.clientY - r.top) * (sizes.logicalHeight / sizes.rectHeight);
             for (let i = 0; i < 7; i++) {
                 if (columns[i].length && columns[i][columns[i].length-1].contains(mx, my)) {
                     const card = columns[i][columns[i].length-1];
@@ -1024,7 +1240,6 @@
             document.getElementById('watchModal').classList.add('show');
             document.getElementById('gameList').innerHTML = 'Поиск активных игр...';
             
-            // Пытаемся получить список через WebSocket
             if (watchListWs) {
                 watchListWs.close();
                 watchListWs = null;
@@ -1052,7 +1267,6 @@
                         }
                     }
                 } catch(e) {
-                    // если сервер не поддерживает список, показываем поле ввода
                     document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список игр не загружен. Введите ID вручную.</p>';
                 }
             };
@@ -1060,7 +1274,6 @@
                 document.getElementById('gameList').innerHTML = '<p style="color:#e74c3c;">Ошибка подключения к серверу</p>';
             };
             watchListWs.onclose = () => {
-                // если список не появился через 2 секунды, отображаем поле ввода
                 setTimeout(() => {
                     if (document.getElementById('gameList').innerHTML === 'Поиск активных игр...') {
                         document.getElementById('gameList').innerHTML = '<p style="color:#aaa;">Список игр не загружен. Введите ID вручную.</p>';
@@ -1093,7 +1306,18 @@
             if (e.target === this) closeWatchModal();
         });
 
-        // ============ ПОДКЛЮЧЕНИЕ К WEBSOCKET ДЛЯ ИГРЫ ============
+        function joinAsWatcher() {
+            openWatchModal();
+        }
+
+        function shareGame() {
+            if (gameId) {
+                navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!'));
+            } else {
+                alert('Сначала создайте игру через Discord командой /solitaire');
+            }
+        }
+
         function connectWebSocket() {
             if (!gameId) return;
             ws = new WebSocket(WS_URL);
@@ -1131,40 +1355,25 @@
             };
         }
 
-        function joinAsWatcher() {
-            openWatchModal();
-        }
-
-        function shareGame() {
+        function startApp() {
+            init();
+            loadTheme();
+            generateBackPattern();
+            layoutCards();
+            drawAll();
+            
             if (gameId) {
-                navigator.clipboard.writeText(window.location.href).then(() => alert('🔗 Ссылка скопирована!'));
+                if (isWatcher) {
+                    document.getElementById('btnWatch').classList.add('hidden');
+                    document.getElementById('btnShare').classList.add('hidden');
+                    document.getElementById('btnNewGame').classList.add('hidden');
+                    document.getElementById('btnHint').classList.add('hidden');
+                }
+                connectWebSocket();
             } else {
-                alert('Сначала создайте игру через Discord командой /solitaire');
+                document.getElementById('btnWatch').classList.remove('hidden');
             }
         }
-
-        let displayWidth = 1120;
-        let displayHeight = 700;
-
-        function startApp() {
-    init();                     // создаёт foundations, колоды и т.д.
-    loadTheme();                // теперь безопасно вызывает drawAll
-    generateBackPattern();      // обновим рубашку с учётом темы
-    layoutCards();
-    drawAll();
-
-    if (gameId) {
-        if (isWatcher) {
-            document.getElementById('btnWatch').classList.add('hidden');
-            document.getElementById('btnShare').classList.add('hidden');
-            document.getElementById('btnNewGame').classList.add('hidden');
-            document.getElementById('btnHint').classList.add('hidden');
-        }
-        connectWebSocket();
-    } else {
-        document.getElementById('btnWatch').classList.remove('hidden');
-    }
-}
 
         startApp();
     </script>
