@@ -3,149 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Пасьянс (Python Backend)</title>
+    <title>Пасьянс Косынка</title>
     <style>
-        body { background: #1a1e2b; color: #ccc; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: Georgia, serif; }
+        body {
+            background: #1a1e2b; color: #ccc; display: flex;
+            justify-content: center; align-items: center; min-height: 100vh;
+            margin: 0; font-family: Georgia, serif; flex-direction: column;
+        }
         canvas { background: #0a6e2e; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.7); }
+        #status { margin-bottom: 10px; font-size: 18px; color: #d4af37; }
+        button { margin: 5px; padding: 8px 16px; font-size: 16px; cursor: pointer; }
+        .controls { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
+    <div id="status">Подключение...</div>
     <canvas id="c"></canvas>
+    <div class="controls">
+        <button onclick="sendAction('new_game')">🔄 Новая игра</button>
+        <button onclick="sendAction('undo')">↩ Отмена</button>
+        <button onclick="sendAction('hint')">💡 Подсказка</button>
+    </div>
+
     <script>
-        const WS_URL = 'ws://localhost:8765';
+        const WS_URL = 'ws://localhost:8765';  // ← замените на wss://... при деплое
         const CARD_W = 95, CARD_H = 120, CARD_OVERLAP = 30;
         const SUITS = ['♠','♥','♦','♣'];
         const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-        let gameState = null, gameId = null, ws = null, isHost = false;
+        let gameState = null, gameId = null, ws = null, isHost = true;
+        let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
 
-        // Подключение
-        const urlParams = new URLSearchParams(window.location.search);
-        const paramGameId = urlParams.get('game');
-        if (paramGameId) {
-            gameId = paramGameId;
-            // Если есть gameId, подключаемся как хост или зритель
-            ws = new WebSocket(WS_URL);
-            ws.onopen = () => ws.send(JSON.stringify({ action: isHost?'create':'join', game_id: gameId }));
-        } else {
-            // Локальная игра: создаём свою на сервере
-            gameId = Math.random().toString(36).substr(2,6);
-            ws = new WebSocket(WS_URL);
-            ws.onopen = () => ws.send(JSON.stringify({ action: 'create', game_id: gameId }));
-        }
-
-        ws.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            if (data.type === 'state') {
-                gameState = data.state;
-                draw();
-            } else if (data.type === 'error') {
-                alert(data.message);
-            }
-        };
-
-        // Отрисовка
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
-        function resize() { canvas.width = Math.min(1100, window.innerWidth-20); canvas.height = Math.min(700, window.innerHeight-20); draw(); }
-        window.onresize = resize;
+
+        // ===== Подключение к серверу =====
+        function connect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramGameId = urlParams.get('game');
+            gameId = paramGameId || Math.random().toString(36).substr(2, 6);
+
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Подключено, загрузка игры...';
+                // Если есть gameId в URL и watch=true – зритель, иначе хост
+                if (paramGameId && urlParams.has('watch')) {
+                    isHost = false;
+                    ws.send(JSON.stringify({ action: 'join', game_id: gameId }));
+                } else {
+                    isHost = true;
+                    ws.send(JSON.stringify({ action: 'create', game_id: gameId }));
+                }
+            };
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'state') {
+                    gameState = data.state;
+                    document.getElementById('status').textContent = 'Игра загружена';
+                    draw();
+                } else if (data.type === 'error') {
+                    document.getElementById('status').textContent = 'Ошибка: ' + data.message;
+                } else if (data.type === 'hint') {
+                    if (data.hint) {
+                        alert(`Подсказка: переместите карту(ы) из ${JSON.stringify(data.hint.from)} в ${JSON.stringify(data.hint.to)}`);
+                    } else {
+                        alert('Нет доступных ходов');
+                    }
+                }
+            };
+            ws.onerror = () => {
+                document.getElementById('status').textContent = 'Ошибка подключения к серверу';
+            };
+            ws.onclose = () => {
+                document.getElementById('status').textContent = 'Соединение закрыто, переподключение...';
+                setTimeout(connect, 3000);
+            };
+        }
+
+        function sendAction(action, payload = {}) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ action, ...payload }));
+        }
+
+        // ===== Отрисовка =====
+        function resize() {
+            canvas.width = Math.min(1100, window.innerWidth - 20);
+            canvas.height = Math.min(700, window.innerHeight - 100);
+            draw();
+        }
+        window.addEventListener('resize', resize);
         resize();
 
         function draw() {
             if (!gameState) return;
-            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             // Фонды
             let x = 20, y = 10;
             for (let s of SUITS) {
                 const f = gameState.foundations[s];
-                ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(x,y,CARD_W,CARD_H); ctx.setLineDash([]);
+                ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+                ctx.strokeRect(x, y, CARD_W, CARD_H); ctx.setLineDash([]);
                 if (f.length) drawCard(f[0], x, y);
                 x += CARD_W + 6;
             }
             // Сток и отвал
             let stockX = 20 + 4*(CARD_W+6) + 20;
-            ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(stockX,10,CARD_W,CARD_H); ctx.setLineDash([]);
-            if (gameState.stock_count > 0) {
-                // показать рубашку
-                drawCardBack(stockX, 10);
-            }
-            if (gameState.waste.length) drawCard(gameState.waste[0], stockX+CARD_W+12, 10);
+            ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+            ctx.strokeRect(stockX, 10, CARD_W, CARD_H); ctx.setLineDash([]);
+            if (gameState.stock_count > 0) drawCardBack(stockX, 10);
+            if (gameState.waste.length) drawCard(gameState.waste[0], stockX + CARD_W + 12, 10);
+
             // Столбцы
             let cx = 20, cy = 150;
             for (let col of gameState.columns) {
                 if (col.length === 0) {
-                    ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]); ctx.strokeRect(cx,cy,CARD_W,CARD_H); ctx.setLineDash([]);
+                    ctx.strokeStyle = '#aaa'; ctx.setLineDash([5,5]);
+                    ctx.strokeRect(cx, cy, CARD_W, CARD_H); ctx.setLineDash([]);
                 }
-                for (let i=0; i<col.length; i++) {
+                for (let i = 0; i < col.length; i++) {
                     const card = col[i];
-                    drawCard(card, cx, cy + i*CARD_OVERLAP);
+                    // Не рисуем карты, которые сейчас перетаскиваются
+                    if (!dragCards.includes(card)) {
+                        drawCard(card, cx, cy + i * CARD_OVERLAP);
+                    }
                 }
                 cx += CARD_W + 9;
             }
+
+            // Перетаскиваемые карты поверх
+            if (drag && dragCards.length) {
+                for (let i = 0; i < dragCards.length; i++) {
+                    drawCard(dragCards[i], mouseX - drag.offsetX + i*2, mouseY - drag.offsetY + i*2);
+                }
+            }
+
+            // Статистика
+            ctx.font = '14px Georgia'; ctx.fillStyle = '#ddd';
+            ctx.fillText(`Ходов: ${gameState.moves}`, canvas.width - 100, canvas.height - 10);
         }
 
         function drawCard(card, x, y) {
             if (!card.face_up) return drawCardBack(x, y);
             ctx.fillStyle = '#faf0e6';
-            ctx.fillRect(x,y,CARD_W,CARD_H);
-            ctx.strokeStyle = '#333'; ctx.lineWidth=1; ctx.strokeRect(x,y,CARD_W,CARD_H);
-            ctx.fillStyle = (card.suit==='♥'||card.suit==='♦') ? '#c33' : '#222';
-            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, x+8, y+22);
-            ctx.font = '16px Georgia'; ctx.fillText(card.suit, x+8, y+40);
-            // перевёрнутый текст
-            ctx.save(); ctx.translate(x+CARD_W-8, y+CARD_H-8); ctx.rotate(Math.PI);
-            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank,0,0);
-            ctx.font = '16px Georgia'; ctx.fillText(card.suit,0,17);
+            ctx.fillRect(x, y, CARD_W, CARD_H);
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, CARD_W, CARD_H);
+            ctx.fillStyle = (card.suit === '♥' || card.suit === '♦') ? '#c33' : '#222';
+            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, x + 8, y + 22);
+            ctx.font = '16px Georgia'; ctx.fillText(card.suit, x + 8, y + 40);
+            ctx.save(); ctx.translate(x + CARD_W - 8, y + CARD_H - 8); ctx.rotate(Math.PI);
+            ctx.font = 'bold 18px Georgia'; ctx.fillText(card.rank, 0, 0);
+            ctx.font = '16px Georgia'; ctx.fillText(card.suit, 0, 17);
             ctx.restore();
-            // центральный символ
             ctx.globalAlpha = 0.2;
-            ctx.font = '50px Georgia'; ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillText(card.suit, x+CARD_W/2, y+CARD_H/2);
-            ctx.textAlign='start'; ctx.globalAlpha=1;
+            ctx.font = '50px Georgia'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(card.suit, x + CARD_W/2, y + CARD_H/2);
+            ctx.textAlign = 'start'; ctx.globalAlpha = 1;
         }
 
         function drawCardBack(x, y) {
             ctx.fillStyle = '#1e3b5c';
-            ctx.fillRect(x,y,CARD_W,CARD_H);
-            ctx.strokeStyle = '#d4af37'; ctx.lineWidth=1.5; ctx.strokeRect(x+4,y+4,CARD_W-8,CARD_H-8);
-            // узор
+            ctx.fillRect(x, y, CARD_W, CARD_H);
+            ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1.5;
+            ctx.strokeRect(x+4, y+4, CARD_W-8, CARD_H-8);
             ctx.fillStyle = '#d4af37';
-            for (let i=6; i<CARD_W-6; i+=20) for (let j=6; j<CARD_H-6; j+=20) {
-                ctx.beginPath(); ctx.arc(x+i, y+j, 3, 0, Math.PI*2); ctx.fill();
-            }
+            for (let i = 6; i < CARD_W-6; i += 20)
+                for (let j = 6; j < CARD_H-6; j += 20) {
+                    ctx.beginPath(); ctx.arc(x + i, y + j, 3, 0, Math.PI*2); ctx.fill();
+                }
         }
 
-        // Интерактивность
-        let drag = null, dragCards = [], fromCol = -1, fromWaste = false;
+        // ===== Мышь =====
+        let mouseX = 0, mouseY = 0;
         canvas.onmousedown = (e) => {
-            if (!gameState) return;
+            if (!gameState || isWatcher) return;
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-            // Клик по стоку
             let stockX = 20 + 4*(CARD_W+6) + 20;
-            if (mx>=stockX && mx<=stockX+CARD_W && my>=10 && my<=10+CARD_H) {
-                ws.send(JSON.stringify({ action: 'click_stock' }));
+            // Клик по стоку
+            if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
+                sendAction('click_stock');
                 return;
             }
             // Отвал
             if (gameState.waste.length) {
                 let wx = stockX+CARD_W+12, wy = 10;
-                if (mx>=wx && mx<=wx+CARD_W && my>=wy && my<=wy+CARD_H) {
+                if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
                     startDrag([gameState.waste[0]], -1, true, mx, my);
                     return;
                 }
             }
             // Столбцы
             let cx = 20, cy = 150;
-            for (let i=0; i<gameState.columns.length; i++) {
+            for (let i = 0; i < gameState.columns.length; i++) {
                 const col = gameState.columns[i];
-                for (let j=col.length-1; j>=0; j--) {
+                for (let j = col.length-1; j >= 0; j--) {
                     const card = col[j];
                     const cardY = cy + j*CARD_OVERLAP;
-                    if (mx>=cx && mx<=cx+CARD_W && my>=cardY && my<=cardY+CARD_H) {
+                    if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
                         if (!card.face_up) break;
-                        // Проверим, что это валидная группа
-                        // Группу определяем на сервере, но для отправки нужно знать количество
-                        // Здесь просто берём все от j до конца, сервер проверит
                         const group = col.slice(j);
                         startDrag(group, i, false, mx, my);
                         return;
@@ -156,82 +212,77 @@
         };
 
         function startDrag(cards, col, waste, mx, my) {
-            drag = { cards, col, waste, offsetX: mx - cards[0].x, offsetY: my - cards[0].y };
+            drag = { cards, col, waste, offsetX: mx - (cards[0].x || 0), offsetY: my - (cards[0].y || 0) };
             dragCards = cards; fromCol = col; fromWaste = waste;
+            mouseX = mx; mouseY = my;
         }
 
         canvas.onmousemove = (e) => {
-            if (!drag) return;
             const rect = canvas.getBoundingClientRect();
-            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-            // Перемещаем карты визуально (временный эффект)
-            draw();
-            for (let i=0; i<dragCards.length; i++) {
-                drawCard(dragCards[i], mx - drag.offsetX + i*2, my - drag.offsetY + i*2);
-            }
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            if (drag) draw();
         };
 
         canvas.onmouseup = (e) => {
             if (!drag) return;
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-            // Определить цель
             let targetType = null, targetIndex = null, targetSuit = null;
-            // Проверка фундаментов
+            // Фонды
             let fx = 20, fy = 10;
             for (let s of SUITS) {
-                if (mx>=fx && mx<=fx+CARD_W && my>=fy && my<=fy+CARD_H) {
+                if (mx >= fx && mx <= fx+CARD_W && my >= fy && my <= fy+CARD_H) {
                     targetType = 'foundation'; targetSuit = s; break;
                 }
                 fx += CARD_W + 6;
             }
-            // Проверка столбцов
+            // Столбцы
             if (!targetType) {
                 let cx = 20, cy = 150;
-                for (let i=0; i<7; i++) {
-                    if (mx>=cx && mx<=cx+CARD_W && my>=cy && my<=canvas.height) {
+                for (let i = 0; i < 7; i++) {
+                    if (mx >= cx && mx <= cx+CARD_W && my >= cy) {
                         targetType = 'column'; targetIndex = i; break;
                     }
                     cx += CARD_W + 9;
                 }
             }
             if (targetType) {
-                // Отправить ход на сервер
-                ws.send(JSON.stringify({
-                    action: 'move',
+                sendAction('move', {
                     from: fromWaste ? { type: 'waste' } : { type: 'column', index: fromCol },
                     card_count: dragCards.length,
                     to: targetType === 'foundation' ? { type: 'foundation', suit: targetSuit } : { type: 'column', index: targetIndex }
-                }));
+                });
             }
             drag = null; dragCards = [];
+            draw();
         };
 
-        // Двойной клик для авто-перемещения на фундамент
         canvas.ondblclick = (e) => {
-            if (!gameState) return;
+            if (!gameState || isWatcher) return;
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left, my = e.clientY - rect.top;
             let cx = 20, cy = 150;
-            for (let i=0; i<gameState.columns.length; i++) {
+            for (let i = 0; i < gameState.columns.length; i++) {
                 const col = gameState.columns[i];
                 if (col.length) {
                     const card = col[col.length-1];
                     const cardY = cy + (col.length-1)*CARD_OVERLAP;
-                    if (mx>=cx && mx<=cx+CARD_W && my>=cardY && my<=cardY+CARD_H) {
-                        ws.send(JSON.stringify({ action: 'auto_move', from: { type: 'column', index: i } }));
+                    if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                        sendAction('auto_move', { from: { type: 'column', index: i } });
                         return;
                     }
                 }
                 cx += CARD_W + 9;
             }
-            // отвал
             let stockX = 20 + 4*(CARD_W+6) + 20;
             let wx = stockX+CARD_W+12, wy = 10;
-            if (gameState.waste.length && mx>=wx && mx<=wx+CARD_W && my>=wy && my<=wy+CARD_H) {
-                ws.send(JSON.stringify({ action: 'auto_move', from: { type: 'waste' } }));
+            if (gameState.waste.length && mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
+                sendAction('auto_move', { from: { type: 'waste' } });
             }
         };
+
+        connect(); // Запуск
     </script>
 </body>
 </html>
