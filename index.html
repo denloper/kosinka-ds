@@ -1147,25 +1147,24 @@
         let displayHeight = 700;
 
         function startApp() {
-            loadTheme();
-            generateBackPattern();
-            init();
-            
-            if (gameId) {
-                if (isWatcher) {
-                    document.getElementById('btnWatch').classList.add('hidden');
-                    document.getElementById('btnShare').classList.add('hidden');
-                    document.getElementById('btnNewGame').classList.add('hidden');
-                    document.getElementById('btnHint').classList.add('hidden');
-                }
-                connectWebSocket();
-            } else {
-                // Локальная игра без WebSocket
-                document.getElementById('btnWatch').classList.remove('hidden');
-            }
-            layoutCards();
-            drawAll();
+    init();                     // создаёт foundations, колоды и т.д.
+    loadTheme();                // теперь безопасно вызывает drawAll
+    generateBackPattern();      // обновим рубашку с учётом темы
+    layoutCards();
+    drawAll();
+
+    if (gameId) {
+        if (isWatcher) {
+            document.getElementById('btnWatch').classList.add('hidden');
+            document.getElementById('btnShare').classList.add('hidden');
+            document.getElementById('btnNewGame').classList.add('hidden');
+            document.getElementById('btnHint').classList.add('hidden');
         }
+        connectWebSocket();
+    } else {
+        document.getElementById('btnWatch').classList.remove('hidden');
+    }
+}
 
         startApp();
     </script>
