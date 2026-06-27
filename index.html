@@ -280,7 +280,7 @@
 
     <script>
         // ============ НАСТРОЙКИ ============
-        const WS_URL = 'ws://localhost:8765';
+        const WS_URL = 'ws://localhost:8765';   // ← замените на ваш публичный WebSocket сервер
         const CARD_W = 95, CARD_H = 120;
         const CARD_OVERLAP = 30;
         const SUITS = ['♠', '♥', '♦', '♣'];
@@ -525,111 +525,17 @@
         let cardColors = { ...themes[0].card };
         const dpr = window.devicePixelRatio || 1;
 
-        function applyTheme(theme) {
-            const root = document.documentElement;
-            Object.entries(theme.vars).forEach(([prop, value]) => {
-                root.style.setProperty(prop, value);
-            });
-            cardColors = { ...theme.card };
-            generateBackPattern();
-            drawAll();
-        }
-
-        function loadTheme() {
-            const saved = localStorage.getItem('solitaire_theme');
-            if (saved) {
-                try {
-                    const index = parseInt(saved);
-                    if (index >= 0 && index < themes.length) {
-                        applyTheme(themes[index]);
-                        return;
-                    }
-                } catch(e) {}
-            }
-            applyTheme(themes[0]);
-        }
-
-        function saveThemeIndex(index) {
-            localStorage.setItem('solitaire_theme', index);
-        }
-
-        function resetTheme() {
-            applyTheme(themes[0]);
-            saveThemeIndex(0);
-            closeThemePicker();
-        }
-
-        function showThemePicker() {
-            const grid = document.getElementById('themeGrid');
-            grid.innerHTML = '';
-            themes.forEach((theme, idx) => {
-                const card = document.createElement('div');
-                card.className = 'theme-card';
-                const preview = document.createElement('div');
-                preview.className = 'theme-preview';
-                preview.style.background = theme.vars['--body-bg'];
-                const label = document.createElement('div');
-                label.className = 'theme-label';
-                label.textContent = theme.name;
-                card.appendChild(preview);
-                card.appendChild(label);
-                card.onclick = () => {
-                    applyTheme(theme);
-                    saveThemeIndex(idx);
-                    closeThemePicker();
-                };
-                grid.appendChild(card);
-            });
-            document.getElementById('themeModal').classList.add('show');
-        }
-
-        function closeThemePicker() {
-            document.getElementById('themeModal').classList.remove('show');
-        }
-        document.getElementById('themeModal').addEventListener('click', function(e) {
-            if (e.target === this) closeThemePicker();
-        });
-
-        // ============ ЗВУКИ ============
-        let audioCtx = null;
-        function ensureAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-
-        function playTone(freq, duration, type = 'sine', vol = 0.1) {
-            ensureAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
-        function playWin() {
-            ensureAudio();
-            const notes = [523, 659, 784, 1047];
-            notes.forEach((freq, i) => {
-                setTimeout(() => playTone(freq, 0.2, 'triangle', 0.12), i * 100);
-            });
-        }
-
-        // ============ WebSocket и роли ============
+        // ============ ПАРАМЕТРЫ URL ============
         const params = new URLSearchParams(window.location.search);
         const gameId = params.get('game');
         const isWatcher = params.has('watch');
-        const channelId = params.get('channel_id');
 
+        // Извлекаем channel_id из хеша (#channel_id=...)
+        const hashString = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hashString);
+        const channelId = hashParams.get('channel_id') || '';
+
+        // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
         let ws = null;
         let isHost = false;
         let spectatorsCount = 0;
@@ -1314,7 +1220,6 @@
                         if (games.length === 0) {
                             listDiv.innerHTML = '<p style="color:#aaa;">Нет активных игр в этом голосовом канале.</p>';
                         } else if (games.length === 1) {
-                            // Автоматически присоединиться к единственной игре
                             closeWatchModal();
                             window.location.href = `?game=${games[0].id}&watch=true`;
                         } else {
@@ -1434,6 +1339,106 @@
             } else {
                 document.getElementById('btnWatch').classList.remove('hidden');
             }
+        }
+
+        // ============ ПРИМЕНЕНИЕ ТЕМ ============
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            Object.entries(theme.vars).forEach(([prop, value]) => {
+                root.style.setProperty(prop, value);
+            });
+            cardColors = { ...theme.card };
+            generateBackPattern();
+            drawAll();
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('solitaire_theme');
+            if (saved) {
+                try {
+                    const index = parseInt(saved);
+                    if (index >= 0 && index < themes.length) {
+                        applyTheme(themes[index]);
+                        return;
+                    }
+                } catch(e) {}
+            }
+            applyTheme(themes[0]);
+        }
+
+        function saveThemeIndex(index) {
+            localStorage.setItem('solitaire_theme', index);
+        }
+
+        function resetTheme() {
+            applyTheme(themes[0]);
+            saveThemeIndex(0);
+            closeThemePicker();
+        }
+
+        function showThemePicker() {
+            const grid = document.getElementById('themeGrid');
+            grid.innerHTML = '';
+            themes.forEach((theme, idx) => {
+                const card = document.createElement('div');
+                card.className = 'theme-card';
+                const preview = document.createElement('div');
+                preview.className = 'theme-preview';
+                preview.style.background = theme.vars['--body-bg'];
+                const label = document.createElement('div');
+                label.className = 'theme-label';
+                label.textContent = theme.name;
+                card.appendChild(preview);
+                card.appendChild(label);
+                card.onclick = () => {
+                    applyTheme(theme);
+                    saveThemeIndex(idx);
+                    closeThemePicker();
+                };
+                grid.appendChild(card);
+            });
+            document.getElementById('themeModal').classList.add('show');
+        }
+
+        function closeThemePicker() {
+            document.getElementById('themeModal').classList.remove('show');
+        }
+        document.getElementById('themeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeThemePicker();
+        });
+
+        // ============ ЗВУКИ ============
+        let audioCtx = null;
+        function ensureAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', vol = 0.1) {
+            ensureAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playPlace() { playTone(1200, 0.1, 'triangle', 0.08); }
+        function playWin() {
+            ensureAudio();
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.2, 'triangle', 0.12), i * 100);
+            });
         }
 
         startApp();
