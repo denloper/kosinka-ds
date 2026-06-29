@@ -21,16 +21,16 @@
             text-align: center;
             background: rgba(18, 25, 42, 0.6);
             backdrop-filter: blur(10px);
-            padding: 25px 30px;
+            padding: 20px 25px;
             border-radius: 24px;
             border: 1px solid rgba(212, 175, 55, 0.15);
             box-shadow: 0 20px 60px rgba(0,0,0,0.7);
             width: 95vw;
-            max-width: 1120px;
+            max-width: 1000px;
         }
         h1 {
-            margin-bottom: 12px;
-            font-size: 32px;
+            margin-bottom: 10px;
+            font-size: 28px;
             letter-spacing: 2px;
             color: #ebc25e;
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
@@ -46,33 +46,39 @@
         }
         canvas:active { cursor: grabbing; }
         .info {
-            margin-top: 12px;
-            font-size: 14px;
+            margin-top: 10px;
+            font-size: 13px;
             color: #8d98b0;
         }
         .win-message {
             color: #ebc25e;
-            font-size: 26px;
+            font-size: 24px;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 8px;
             animation: pulse 1.5s infinite;
+        }
+        .no-moves-message {
+            color: #e57373;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 8px;
         }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .btn-row {
-            margin-top: 15px;
+            margin-top: 12px;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
         }
         button {
-            padding: 14px 32px;
+            padding: 12px 28px;
             color: #e0e0e0;
             background: rgba(30, 45, 70, 0.6);
             border: 1px solid rgba(212, 175, 55, 0.3);
             border-radius: 12px;
             cursor: pointer;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             font-family: inherit;
             transition: all 0.3s ease;
@@ -87,24 +93,34 @@
         }
         .btn-new { color: #e6c86a; }
         .btn-undo { color: #a0c0f0; }
+        .btn-hint { color: #f0d090; }
     </style>
 </head>
 <body>
 <div id="game">
     <h1>🕯 Косынка</h1>
     <canvas id="canvas"></canvas>
-    <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку</div>
+    <div class="info">🖱 Перетаскивайте карты | Двойной клик — авто в стопку | 💡 Подсказка на 3 сек</div>
     <div id="winMessage"></div>
     <div class="btn-row">
         <button class="btn-new" onclick="newGame()">🔄 Новая игра</button>
         <button class="btn-undo" onclick="undoMove()">↩ Отмена</button>
+        <button class="btn-hint" onclick="showHint()">💡 Подсказка (<span id="hintCount">0</span>)</button>
     </div>
 </div>
 
 <script>
-    const CARD_W = 95, CARD_H = 115, CARD_OVERLAP = 28;
+    const CARD_W = 85, CARD_H = 105, CARD_OVERLAP = 25;
+    const FOUNDATION_GAP = 10;
+    const COLUMN_GAP = 12;
+    
     const SUITS = ['♠', '♥', '♦', '♣'];
     const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    const MAX_HISTORY = 100;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameId = urlParams.get('game_id');
+    const isWatchMode = urlParams.has('watch');
 
     let stock, waste, foundations, columns;
     let moves = 0, win = false;
@@ -112,11 +128,27 @@
     let dragOffsetX = 0, dragOffsetY = 0, mouseX = 0, mouseY = 0;
     let isDragging = false;
     let history = [];
+    let hintCount = 0;
+    
+    let hintCards = [];
+    let hintTarget = null;
+    let hintExpiry = 0;
+
+    let foundationPositions = [];
+    let stockPosition = { x: 0, y: 0 };
+    let wastePosition = { x: 0, y: 0 };
+    let columnPositions = [];
 
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // звуки
+    if (isWatchMode) {
+        document.querySelector('.btn-row').style.display = 'none';
+        document.querySelector('.info').innerText = '👁 Режим наблюдения';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.cursor = 'default';
+    }
+
     let audioCtx = null;
     function ensureAudio() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -191,54 +223,61 @@
                 ctx.lineWidth = 0.5;
                 ctx.strokeRect(x+5, y+5, CARD_W-10, CARD_H-10);
                 ctx.fillStyle = this.color;
-                ctx.font = 'bold 17px "Georgia", "Times New Roman", serif';
-                ctx.fillText(this.rank, x+13, y+22);
-                ctx.font = '13px "Georgia", "Times New Roman", serif';
-                ctx.fillText(this.suit, x+13, y+37);
+                ctx.font = 'bold 16px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.rank, x+11, y+20);
+                ctx.font = '12px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.suit, x+11, y+34);
                 ctx.save();
-                ctx.translate(x+CARD_W-15, y+CARD_H-15);
+                ctx.translate(x+CARD_W-13, y+CARD_H-13);
                 ctx.rotate(Math.PI);
-                ctx.font = 'bold 17px "Georgia", "Times New Roman", serif';
+                ctx.font = 'bold 16px "Georgia", "Times New Roman", serif';
                 ctx.fillText(this.rank, 0, 0);
-                ctx.font = '13px "Georgia", "Times New Roman", serif';
-                ctx.fillText(this.suit, 0, 15);
+                ctx.font = '12px "Georgia", "Times New Roman", serif';
+                ctx.fillText(this.suit, 0, 14);
                 ctx.restore();
                 ctx.globalAlpha = 0.25;
-                ctx.font = '44px "Georgia", "Times New Roman", serif';
+                ctx.font = '40px "Georgia", "Times New Roman", serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(this.suit, x+CARD_W/2, y+CARD_H/2);
                 ctx.textAlign = 'start';
                 ctx.globalAlpha = 1.0;
-                if (['J','Q','K'].includes(this.rank)) {
-                    ctx.beginPath();
-                    ctx.ellipse(x+CARD_W/2, y+CARD_H/2, 20, 28, 0, 0, Math.PI*2);
-                    ctx.strokeStyle = '#d4af37';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-                    ctx.fillStyle = 'rgba(212, 175, 55, 0.08)';
-                    ctx.fill();
-                }
             } else {
                 ctx.fillStyle = '#0f1e36';
                 ctx.fillRect(x, y, CARD_W, CARD_H);
                 ctx.strokeStyle = '#ebc25e';
                 ctx.lineWidth = 1.8;
-                ctx.strokeRect(4, 4, CARD_W-8, CARD_H-8);
+                ctx.strokeRect(x+4, y+4, CARD_W-8, CARD_H-8);
                 ctx.fillStyle = '#d4af37';
-                const sp = 21, ox = (CARD_W%sp)/2, oy = (CARD_H%sp)/2;
+                const sp = 19, ox = (CARD_W%sp)/2, oy = (CARD_H%sp)/2;
                 for (let i = ox+sp/2; i < CARD_W-ox; i += sp)
                     for (let j = oy+sp/2; j < CARD_H-oy; j += sp) {
                         ctx.beginPath();
-                        ctx.arc(x+i, y+j, 3.2, 0, Math.PI*2);
+                        ctx.arc(x+i, y+j, 3, 0, Math.PI*2);
                         ctx.fill();
                     }
             }
+            
+            if (!isDrag && hintCards.includes(this) && hintExpiry > Date.now()) {
+                const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+                ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + pulse * 0.4})`;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                ctx.shadowBlur = 15;
+                ctx.strokeRect(x-2, y-2, CARD_W+4, CARD_H+4);
+                ctx.shadowBlur = 0;
+            }
+            
             ctx.restore();
         }
         contains(mx, my) {
             return mx >= this.x && mx <= this.x + CARD_W && my >= this.y && my <= this.y + CARD_H;
         }
+    }
+
+    // ИСПРАВЛЕНО: Вспомогательная функция для проверки попадания точки в прямоугольник
+    function isPointInRect(px, py, rx, ry, rw, rh) {
+        return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
     }
 
     function newGame() {
@@ -258,87 +297,170 @@
                 c.faceUp = (row === col);
                 columns[col].push(c);
             }
-        moves = 0; win = false; history = [];
+        moves = 0; win = false; history = []; hintCount = 0;
+        document.getElementById('hintCount').innerText = '0';
         document.getElementById('winMessage').innerHTML = '';
         clearDragState();
+        clearHint();
         layoutCards(); draw();
     }
 
     function layoutCards() {
+        foundationPositions = [];
         let x = 20, y = 10;
-        for (let s of SUITS) {
+        for (let i = 0; i < SUITS.length; i++) {
+            const s = SUITS[i];
+            foundationPositions.push({ suit: s, x: x, y: y });
             if (foundations[s].length) {
                 let c = foundations[s][foundations[s].length-1];
                 c.x = x; c.y = y;
             }
-            x += CARD_W + 6;
+            x += CARD_W + FOUNDATION_GAP;
         }
-        let stockX = x + 20;
-        if (stock.length) { stock[stock.length-1].x = stockX; stock[stock.length-1].y = y; }
-        if (waste.length) { waste[waste.length-1].x = stockX + CARD_W + 12; waste[waste.length-1].y = y; }
-        let cx = 20, cy = 150;
-        for (let col of columns) {
-            for (let i = 0; i < col.length; i++) {
-                col[i].x = cx;
-                col[i].y = cy + i * CARD_OVERLAP;
+        
+        stockPosition = { x: x + 20, y: y };
+        wastePosition = { x: stockPosition.x + CARD_W + 15, y: y };
+        
+        if (stock.length) { 
+            stock[stock.length-1].x = stockPosition.x; 
+            stock[stock.length-1].y = stockPosition.y; 
+        }
+        if (waste.length) { 
+            waste[waste.length-1].x = wastePosition.x; 
+            waste[waste.length-1].y = wastePosition.y; 
+        }
+        
+        columnPositions = [];
+        let cx = 20, cy = 130;
+        for (let i = 0; i < columns.length; i++) {
+            columnPositions.push({ x: cx, y: cy });
+            for (let j = 0; j < columns[i].length; j++) {
+                columns[i][j].x = cx;
+                columns[i][j].y = cy + j * CARD_OVERLAP;
             }
-            cx += CARD_W + 8;
+            cx += CARD_W + COLUMN_GAP;
         }
     }
 
     function draw() {
-        canvas.width = Math.min(1100, window.innerWidth-20);
-        canvas.height = Math.min(700, window.innerHeight-100);
+        const targetW = Math.min(950, window.innerWidth-20);
+        const targetH = Math.min(800, Math.max(550, window.innerHeight-100));
+        if (canvas.width !== targetW) canvas.width = targetW;
+        if (canvas.height !== targetH) canvas.height = targetH;
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        let x = 20, y = 10;
-        for (let s of SUITS) {
-            if (foundations[s].length)
+        const hintActive = hintExpiry > Date.now();
+        if (hintActive && hintCards.length > 0) {
+            requestAnimationFrame(() => { if (hintExpiry > Date.now()) draw(); });
+        } else {
+            hintCards = [];
+            hintTarget = null;
+        }
+
+        for (let i = 0; i < SUITS.length; i++) {
+            const s = SUITS[i];
+            const pos = foundationPositions[i];
+            if (foundations[s].length) {
                 foundations[s][foundations[s].length-1].draw();
-            else {
+            } else {
                 ctx.strokeStyle = 'rgba(255,255,255,0.1)';
                 ctx.lineWidth = 1;
-                ctx.setLineDash([6,6]); ctx.strokeRect(x,y,CARD_W,CARD_H); ctx.setLineDash([]);
+                ctx.setLineDash([6,6]); 
+                ctx.strokeRect(pos.x, pos.y, CARD_W, CARD_H); 
+                ctx.setLineDash([]);
             }
-            x += CARD_W + 6;
+            
+            if (hintActive && hintTarget && hintTarget.type === 'foundation' && hintTarget.suit === s) {
+                const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+                ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + pulse * 0.4})`;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                ctx.shadowBlur = 15;
+                ctx.strokeRect(pos.x-2, pos.y-2, CARD_W+4, CARD_H+4);
+                ctx.shadowBlur = 0;
+            }
         }
-        let stockX = x + 20;
-        if (stock.length) stock[stock.length-1].draw();
-        else { ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.setLineDash([6,6]); ctx.strokeRect(stockX,10,CARD_W,CARD_H); ctx.setLineDash([]); }
-        if (waste.length) waste[waste.length-1].draw();
+        
+        if (stock.length) {
+            stock[stock.length-1].draw();
+        } else {
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; 
+            ctx.setLineDash([6,6]); 
+            ctx.strokeRect(stockPosition.x, stockPosition.y, CARD_W, CARD_H); 
+            ctx.setLineDash([]);
+        }
+        
+        if (hintActive && hintTarget && hintTarget.type === 'stock') {
+            const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+            ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + pulse * 0.4})`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.strokeRect(stockPosition.x-2, stockPosition.y-2, CARD_W+4, CARD_H+4);
+            ctx.shadowBlur = 0;
+        }
+        
+        if (waste.length) {
+            waste[waste.length-1].draw();
+        }
 
-        let cx = 20, cy = 150;
         for (let i = 0; i < columns.length; i++) {
             for (let card of columns[i]) {
                 if (!dragCards.includes(card)) card.draw();
             }
-            cx += CARD_W + 8;
+            
+            if (hintActive && hintTarget && hintTarget.type === 'column' && hintTarget.index === i) {
+                const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+                ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + pulse * 0.4})`;
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                ctx.shadowBlur = 15;
+                if (columns[i].length > 0) {
+                    const topCard = columns[i][columns[i].length-1];
+                    ctx.strokeRect(topCard.x-2, topCard.y-2, CARD_W+4, CARD_H+4);
+                } else {
+                    ctx.strokeRect(columnPositions[i].x-2, columnPositions[i].y-2, CARD_W+4, CARD_H+4);
+                }
+                ctx.shadowBlur = 0;
+            }
         }
+        
         if (isDragging && dragCards.length) {
             for (let i = 0; i < dragCards.length; i++)
                 dragCards[i].draw(mouseX - dragOffsetX + i*2, mouseY - dragOffsetY + i*2, true, i, dragCards.length);
         }
-        ctx.font = '14px Georgia'; ctx.fillStyle = '#8d98b0';
-        ctx.fillText(`Ходов: ${moves}`, canvas.width-90, canvas.height-10);
+        
+        ctx.font = '13px Georgia'; 
+        ctx.fillStyle = '#8d98b0';
+        ctx.fillText(`Ходов: ${moves}`, canvas.width-80, canvas.height-10);
     }
 
     function canPlaceOnFoundation(card) {
+        if (!card.faceUp) return false;
         const arr = foundations[card.suit];
         if (!arr.length) return card.rank === 'A';
         const top = arr[arr.length-1];
         return RANKS.indexOf(card.rank) === RANKS.indexOf(top.rank) + 1;
     }
+    
     function canPlaceOnColumn(card, column) {
+        if (!card.faceUp) return false;
         if (!column.length) return card.rank === 'K';
         const top = column[column.length-1];
+        if (!top.faceUp) return false;
         const cardRed = card.suit==='♥'||card.suit==='♦';
         const topRed = top.suit==='♥'||top.suit==='♦';
         return (cardRed !== topRed) && (top.value === card.value + 1);
     }
+    
     function isValidGroup(cards) {
+        if (cards.length === 0) return false;
+        for (let i = 0; i < cards.length; i++) {
+            if (!cards[i].faceUp) return false;
+        }
         for (let i=0; i<cards.length-1; i++) {
             const cur = cards[i], nxt = cards[i+1];
-            if (!cur.faceUp) return false;
             const curRed = cur.suit==='♥'||cur.suit==='♦';
             const nxtRed = nxt.suit==='♥'||nxt.suit==='♦';
             if (curRed === nxtRed || cur.value !== nxt.value + 1) return false;
@@ -352,15 +474,30 @@
         dragFromCol = -1;
         dragFromWaste = false;
     }
+    
+    function clearHint() {
+        hintCards = [];
+        hintTarget = null;
+        hintExpiry = 0;
+    }
 
     function saveHistory() {
+        const copyCards = arr => arr.map(card => Object.assign(new Card(card.suit, card.rank, card.faceUp), {x: card.x, y: card.y}));
         history.push({
-            stock: stock.slice(), waste: waste.slice(),
-            foundations: JSON.parse(JSON.stringify(foundations)),
-            columns: columns.map(c => c.map(card => Object.assign(new Card(card.suit, card.rank, card.faceUp), {x: card.x, y: card.y}))),
-            moves: moves, win: win
+            stock: copyCards(stock),
+            waste: copyCards(waste),
+            foundations: Object.fromEntries(
+                Object.entries(foundations).map(([suit, cards]) => [suit, copyCards(cards)])
+            ),
+            columns: columns.map(copyCards),
+            moves: moves,
+            win: win
         });
+        if (history.length > MAX_HISTORY) {
+            history.shift();
+        }
     }
+
     function undoMove() {
         if (!history.length) return;
         const state = history.pop();
@@ -368,48 +505,165 @@
         foundations = state.foundations; columns = state.columns;
         moves = state.moves; win = state.win;
         document.getElementById('winMessage').innerHTML = win ? '<div class="win-message">🏆 Победа!</div>' : '';
+        clearHint();
         layoutCards(); draw();
     }
+    
     function checkWin() {
-        if (Object.values(foundations).every(a => a.length === 13)) {
+        if (win) return; // Уже выиграли
+        const allComplete = Object.values(foundations).every(a => a.length === 13);
+        if (allComplete) {
             win = true;
             document.getElementById('winMessage').innerHTML = '<div class="win-message">🏆 Победа!</div>';
             playWinSound();
+            draw(); // Гарантированная перерисовка
         }
     }
-
-    // Мышь
-    canvas.addEventListener('mousedown', (e) => {
-        if (win) return;
-        const mx = e.offsetX, my = e.offsetY;
-        clearDragState();
-        let stockX = 20 + 4*(CARD_W+6) + 20;
-        if (mx >= stockX && mx <= stockX+CARD_W && my >= 10 && my <= 10+CARD_H) {
-            saveHistory();
-            if (stock.length) { let c=stock.pop(); c.faceUp=true; waste.push(c); }
-            else while (waste.length) { let c=waste.pop(); c.faceUp=false; stock.push(c); }
-            moves++; layoutCards(); draw(); return;
-        }
-        if (waste.length) {
-            let wx = stockX+CARD_W+12, wy = 10;
-            if (mx >= wx && mx <= wx+CARD_W && my >= wy && my <= wy+CARD_H) {
-                startDrag([waste[waste.length-1]], -1, true, mx, my);
-                return;
+    
+    function showHint() {
+        if (win || isWatchMode) return;
+        clearHint();
+        
+        for (let i = 0; i < columns.length; i++) {
+            if (columns[i].length) {
+                const card = columns[i][columns[i].length-1];
+                if (canPlaceOnFoundation(card)) {
+                    hintCards = [card];
+                    hintTarget = { type: 'foundation', suit: card.suit };
+                    hintExpiry = Date.now() + 3000;
+                    hintCount++;
+                    document.getElementById('hintCount').innerText = hintCount;
+                    draw();
+                    return;
+                }
             }
         }
-        let cx = 20, cy = 150;
+        
+        if (waste.length && canPlaceOnFoundation(waste[waste.length-1])) {
+            hintCards = [waste[waste.length-1]];
+            hintTarget = { type: 'foundation', suit: waste[waste.length-1].suit };
+            hintExpiry = Date.now() + 3000;
+            hintCount++;
+            document.getElementById('hintCount').innerText = hintCount;
+            draw();
+            return;
+        }
+        
+        for (let fromCol = 0; fromCol < columns.length; fromCol++) {
+            for (let startIdx = 0; startIdx < columns[fromCol].length; startIdx++) {
+                const group = columns[fromCol].slice(startIdx);
+                if (!isValidGroup(group)) continue;
+                
+                for (let toCol = 0; toCol < columns.length; toCol++) {
+                    if (fromCol === toCol) continue;
+                    if (canPlaceOnColumn(group[0], columns[toCol])) {
+                        const opensCard = startIdx > 0 && !columns[fromCol][startIdx-1].faceUp;
+                        if (opensCard) {
+                            hintCards = group;
+                            hintTarget = { type: 'column', index: toCol };
+                            hintExpiry = Date.now() + 3000;
+                            hintCount++;
+                            document.getElementById('hintCount').innerText = hintCount;
+                            draw();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (waste.length) {
+            const card = waste[waste.length-1];
+            for (let toCol = 0; toCol < columns.length; toCol++) {
+                if (canPlaceOnColumn(card, columns[toCol])) {
+                    hintCards = [card];
+                    hintTarget = { type: 'column', index: toCol };
+                    hintExpiry = Date.now() + 3000;
+                    hintCount++;
+                    document.getElementById('hintCount').innerText = hintCount;
+                    draw();
+                    return;
+                }
+            }
+        }
+        
+        for (let fromCol = 0; fromCol < columns.length; fromCol++) {
+            for (let startIdx = 0; startIdx < columns[fromCol].length; startIdx++) {
+                const group = columns[fromCol].slice(startIdx);
+                if (!isValidGroup(group)) continue;
+                
+                for (let toCol = 0; toCol < columns.length; toCol++) {
+                    if (fromCol === toCol) continue;
+                    if (canPlaceOnColumn(group[0], columns[toCol])) {
+                        hintCards = group;
+                        hintTarget = { type: 'column', index: toCol };
+                        hintExpiry = Date.now() + 3000;
+                        hintCount++;
+                        document.getElementById('hintCount').innerText = hintCount;
+                        draw();
+                        return;
+                    }
+                }
+            }
+        }
+        
+        if (stock.length || waste.length) {
+            hintTarget = { type: 'stock' };
+            hintExpiry = Date.now() + 3000;
+            hintCount++;
+            document.getElementById('hintCount').innerText = hintCount;
+            draw();
+            return;
+        }
+        
+        document.getElementById('winMessage').innerHTML = '<div class="no-moves-message">😔 Доступных ходов нет</div>';
+        setTimeout(() => {
+            if (!win) document.getElementById('winMessage').innerHTML = '';
+        }, 2000);
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (win || isWatchMode) return;
+        clearHint();
+        const mx = e.offsetX, my = e.offsetY;
+        clearDragState();
+        
+        // ИСПРАВЛЕНО: Используем isPointInRect для надёжной проверки
+        if (isPointInRect(mx, my, stockPosition.x, stockPosition.y, CARD_W, CARD_H)) {
+            if (stock.length || waste.length) {
+                saveHistory();
+                if (stock.length) { 
+                    let c = stock.pop(); 
+                    c.faceUp = true; 
+                    waste.push(c); 
+                } else { 
+                    while (waste.length) { 
+                        let c = waste.pop(); 
+                        c.faceUp = false; 
+                        stock.push(c); 
+                    } 
+                }
+                moves++;
+            }
+            layoutCards(); draw(); return;
+        }
+        
+        if (waste.length && isPointInRect(mx, my, wastePosition.x, wastePosition.y, CARD_W, CARD_H)) {
+            startDrag([waste[waste.length-1]], -1, true, mx, my);
+            return;
+        }
+        
         for (let i = 0; i < columns.length; i++) {
             for (let j = columns[i].length-1; j >= 0; j--) {
                 const card = columns[i][j];
                 if (!card.faceUp) break;
-                const cardY = cy + j*CARD_OVERLAP;
-                if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                const cardY = columnPositions[i].y + j * CARD_OVERLAP;
+                if (isPointInRect(mx, my, columnPositions[i].x, cardY, CARD_W, CARD_H)) {
                     const group = columns[i].slice(j);
                     if (isValidGroup(group)) startDrag(group, i, false, mx, my);
                     return;
                 }
             }
-            cx += CARD_W + 8;
         }
     });
 
@@ -423,70 +677,106 @@
         if (!isDragging) return;
         const mx = e.offsetX, my = e.offsetY;
         let placed = false;
-        let fx = 20, fy = 10;
-        for (let s of SUITS) {
-            if (mx >= fx && mx <= fx+CARD_W && my >= fy && my <= fy+CARD_H) {
-                if (dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
+        
+        // ИСПРАВЛЕНО: Проверяем каждый foundation отдельно
+        // Сначала проверяем, можно ли вообще положить карту в foundation
+        if (dragCards.length === 1 && canPlaceOnFoundation(dragCards[0])) {
+            const card = dragCards[0];
+            // Находим ПРАВИЛЬНЫЙ foundation position для данной масти
+            for (let i = 0; i < foundationPositions.length; i++) {
+                const pos = foundationPositions[i];
+                // Проверяем, что мышь над этим position И масть совпадает
+                if (pos.suit === card.suit && isPointInRect(mx, my, pos.x, pos.y, CARD_W, CARD_H)) {
                     saveHistory();
-                    foundations[s].push(dragCards[0]);
+                    foundations[card.suit].push(card);
                     if (dragFromWaste) waste.pop();
                     else {
                         columns[dragFromCol].pop();
                         if (columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
                             columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                     }
-                    moves++; placed = true; playPlaceSound();
+                    moves++; 
+                    placed = true; 
+                    playPlaceSound();
+                    break;
                 }
-                break;
             }
-            fx += CARD_W + 6;
         }
+        
+        // ИСПРАВЛЕНО: Проверяем columns только если карта ещё не помещена
         if (!placed) {
-            let cx = 20, cy = 150;
             for (let i = 0; i < 7; i++) {
-                if (mx >= cx && mx <= cx+CARD_W && my >= cy) {
+                const pos = columnPositions[i];
+                // Проверяем попадание в область столбца
+                if (mx >= pos.x && mx <= pos.x + CARD_W && my >= pos.y) {
                     if (canPlaceOnColumn(dragCards[0], columns[i])) {
                         saveHistory();
-                        if (dragFromWaste) columns[i].push(waste.pop());
-                        else {
+                        if (dragFromWaste) {
+                            columns[i].push(waste.pop());
+                        } else {
                             const moved = columns[dragFromCol].splice(columns[dragFromCol].length - dragCards.length);
                             columns[i].push(...moved);
                             if (columns[dragFromCol].length && !columns[dragFromCol][columns[dragFromCol].length-1].faceUp)
                                 columns[dragFromCol][columns[dragFromCol].length-1].faceUp = true;
                         }
-                        moves++; placed = true; playPlaceSound();
+                        moves++; 
+                        placed = true; 
+                        playPlaceSound();
+                        break;
                     }
-                    break;
                 }
-                cx += CARD_W + 8;
             }
         }
+        
         clearDragState();
-        layoutCards(); draw();
-        if (placed) checkWin();
+        clearHint();
+        layoutCards(); 
+        draw();
+        
+        // ИСПРАВЛЕНО: Всегда проверяем победу после хода
+        if (placed) {
+            checkWin();
+        }
     });
 
     canvas.addEventListener('dblclick', (e) => {
-        if (win) return;
+        if (win || isWatchMode) return;
+        clearHint();
         const mx = e.offsetX, my = e.offsetY;
-        let cx = 20, cy = 150;
+        
+        if (waste.length && isPointInRect(mx, my, wastePosition.x, wastePosition.y, CARD_W, CARD_H)) {
+            const card = waste[waste.length-1];
+            if (canPlaceOnFoundation(card)) {
+                saveHistory();
+                foundations[card.suit].push(waste.pop());
+                moves++; 
+                playPlaceSound();
+                layoutCards(); 
+                draw();
+                checkWin();
+            }
+            return;
+        }
+
         for (let i = 0; i < columns.length; i++) {
             if (columns[i].length) {
                 const card = columns[i][columns[i].length-1];
-                const cardY = cy + (columns[i].length-1)*CARD_OVERLAP;
-                if (mx >= cx && mx <= cx+CARD_W && my >= cardY && my <= cardY+CARD_H) {
+                const cardY = columnPositions[i].y + (columns[i].length-1) * CARD_OVERLAP;
+                if (isPointInRect(mx, my, columnPositions[i].x, cardY, CARD_W, CARD_H)) {
                     if (canPlaceOnFoundation(card)) {
                         saveHistory();
                         foundations[card.suit].push(columns[i].pop());
                         if (columns[i].length && !columns[i][columns[i].length-1].faceUp)
                             columns[i][columns[i].length-1].faceUp = true;
-                        moves++; playPlaceSound();
-                        checkWin(); layoutCards(); draw();
+                        moves++; 
+                        playPlaceSound();
+                        layoutCards(); 
+                        draw();
+                        checkWin();
                     }
                     return;
                 }
             }
-            cx += CARD_W + 8;
         }
     });
 
